@@ -23,6 +23,22 @@ function tokenize(text: string): WordToken[] {
   }))
 }
 
+// Split story into paragraphs, each with its own word array + global offset
+interface Paragraph {
+  words: WordToken[]
+  offset: number  // index of this paragraph's first word in the global words array
+}
+
+function toParagraphs(storyText: string): Paragraph[] {
+  let offset = 0
+  return storyText.split(/\n\n+/).filter(s => s.trim()).map(para => {
+    const words = tokenize(para)
+    const p: Paragraph = { words, offset }
+    offset += words.length
+    return p
+  })
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 function StoryScreen() {
@@ -49,7 +65,8 @@ function StoryScreen() {
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([])
 
-  const words = useMemo(() => story ? tokenize(story.story) : [], [story])
+  const paragraphs = useMemo(() => story ? toParagraphs(story.story) : [], [story])
+  const words = useMemo(() => paragraphs.flatMap(p => p.words), [paragraphs])
 
   // Keep currentWordIndex ref in sync
   useEffect(() => { currentWordIndexRef.current = currentWordIndex }, [currentWordIndex])
@@ -300,42 +317,42 @@ function StoryScreen() {
 
       {/* Story text — scrollable */}
       <div className="flex-1 overflow-y-auto px-6 pb-2">
-        <p
-          className="font-body select-none"
-          style={{ fontSize: '19px', lineHeight: 1.9 }}
-        >
-          {words.map((word, i) => {
-            const isSpoken = spokenIndices.has(i)
-            const isCurrent = phase === 'reading' && i === currentWordIndex
-            const isUpcoming = phase === 'reading' && i === currentWordIndex + 1
+        {paragraphs.map((para, pi) => (
+          <p
+            key={pi}
+            className="font-body select-none mb-5"
+            style={{ fontSize: '19px', lineHeight: 1.9 }}
+          >
+            {para.words.map((word, wi) => {
+              const i = para.offset + wi
+              const isSpoken = spokenIndices.has(i)
+              const isCurrent = phase === 'reading' && i === currentWordIndex
 
-            let className = 'inline transition-colors duration-200'
-            let style: React.CSSProperties = {}
+              let className = 'inline transition-colors duration-200'
+              let style: React.CSSProperties = {}
 
-            if (isSpoken) {
-              className += ' text-green-600 font-medium'
-            } else if (isCurrent) {
-              className += ' rounded-sm font-bold'
-              style = { backgroundColor: '#FEF08A', color: '#3D2B1F' } // yellow-200
-            } else if (isUpcoming) {
-              // Slightly highlighted to show what's coming next
-              className += ' text-ink-light'
-            }
+              if (isSpoken) {
+                className += ' text-green-600 font-medium'
+              } else if (isCurrent) {
+                className += ' rounded-sm font-bold'
+                style = { backgroundColor: '#FEF08A', color: '#3D2B1F' }
+              }
 
-            return (
-              <span key={i}>
-                <span
-                  ref={el => { wordRefs.current[i] = el }}
-                  className={className}
-                  style={style}
-                >
-                  {word.text}
+              return (
+                <span key={i}>
+                  <span
+                    ref={el => { wordRefs.current[i] = el }}
+                    className={className}
+                    style={style}
+                  >
+                    {word.text}
+                  </span>
+                  {' '}
                 </span>
-                {' '}
-              </span>
-            )
-          })}
-        </p>
+              )
+            })}
+          </p>
+        ))}
       </div>
 
       {/* Bottom controls */}

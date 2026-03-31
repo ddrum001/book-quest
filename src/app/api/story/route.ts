@@ -36,9 +36,11 @@ About Erin:
 
 Rules:
 - 180–200 words total
+- Lexile level 520–570L (comfortable 3rd-grade reading level — short sentences, common words)
 - Engaging plot with a clear beginning, middle, and end
-- Include exactly 3 vocabulary spotlight words that are slightly challenging (4th-grade level); use each naturally in the story
-- No chapter breaks or section headers — one continuous prose story
+- Include exactly 3 vocabulary spotlight words that are mildly challenging (strong 3rd-grade level); use each naturally in the story
+- Break the story into 3–4 short paragraphs (2–4 sentences each) separated by a blank line — no wall of text
+- No chapter titles or section headers
 - Keep the tone fun, a little adventurous, and never condescending
 
 Return ONLY valid JSON, no markdown fences, no extra text:
