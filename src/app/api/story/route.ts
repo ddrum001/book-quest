@@ -47,6 +47,7 @@ Return ONLY valid JSON, no markdown fences, no extra text:
 {
   "title": "Story title",
   "story": "Full story text...",
+  "imagePrompt": "colorful children's book illustration of [key scene from the story], soft watercolor style, whimsical, bright colors, no text",
   "vocab": [
     {"word": "word1", "hint": "simple child-friendly definition"},
     {"word": "word2", "hint": "simple child-friendly definition"},

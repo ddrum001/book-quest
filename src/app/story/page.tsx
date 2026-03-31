@@ -315,6 +315,18 @@ function StoryScreen() {
         </div>
       )}
 
+      {/* Story illustration */}
+      {story!.imagePrompt && (
+        <div className="shrink-0 px-6 pb-4">
+          <img
+            src={`https://image.pollinations.ai/prompt/${encodeURIComponent(story!.imagePrompt)}&width=800&height=380&nologo=true`}
+            alt="Story illustration"
+            className="w-full rounded-3xl object-cover shadow-sm"
+            style={{ maxHeight: '220px' }}
+          />
+        </div>
+      )}
+
       {/* Story text — scrollable */}
       <div className="flex-1 overflow-y-auto px-6 pb-2">
         {paragraphs.map((para, pi) => (

@@ -117,6 +117,7 @@ export function getXpInCurrentLevel(totalXp: number): number {
 export interface StoryData {
   title: string
   story: string
+  imagePrompt: string
   vocab: { word: string; hint: string }[]
 }
 
