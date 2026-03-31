@@ -58,7 +58,6 @@ function StoryScreen() {
   const [stumbleWords, setStumbleWords] = useState<Set<string>>(new Set())
   const [showHint, setShowHint] = useState(false)
   const [speechEnabled, setSpeechEnabled] = useState(false)
-  const [lastHeard, setLastHeard] = useState('')
 
   // Stable refs for use inside callbacks
   const currentWordIndexRef = useRef(0)
@@ -122,7 +121,6 @@ function StoryScreen() {
     const idx = currentWordIndexRef.current
     if (idx >= currentWords.length) return
 
-    setLastHeard(spoken)
     if (currentWords[idx].clean === spoken) {
       setSpokenIndices(prev => {
         const next = new Set(prev)
@@ -144,7 +142,7 @@ function StoryScreen() {
     }
   }, [resetHintTimer]) // resetHintTimer is also stable
 
-  const { listening, supported } = useSpeechRecognition(handleSpokenWord, speechEnabled)
+  const { listening, supported, lastRaw } = useSpeechRecognition(handleSpokenWord, speechEnabled)
 
   // ── Actions ─────────────────────────────────────────────────────────────────
   function handleStartReading() {
@@ -398,7 +396,7 @@ function StoryScreen() {
                   {listening ? 'Listening…' : 'Reconnecting…'}
                 </p>
                 <p className="text-[11px] text-ink-muted font-body mt-0.5">
-                  {lastHeard ? `Heard: "${lastHeard}"` : (supported ? 'Say the yellow word' : 'Use Chrome or Safari')}
+                  {lastRaw ? `Heard: "${lastRaw}"` : (supported ? 'Say the yellow word' : 'Use Chrome or Safari')}
                 </p>
               </div>
             </div>

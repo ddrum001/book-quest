@@ -8,6 +8,7 @@ export function useSpeechRecognition(
 ) {
   const [listening, setListening] = useState(false)
   const [supported, setSupported] = useState(true)
+  const [lastRaw, setLastRaw] = useState('')
 
   // Stable refs so callbacks don't go stale
   const onWordRef = useRef(onWord)
@@ -47,6 +48,7 @@ export function useSpeechRecognition(
         const prevWords = prev.split(/\s+/).filter(Boolean)
         const allWords = transcript.split(/\s+/).filter(Boolean)
         const newWords = allWords.slice(prevWords.length)
+        setLastRaw(transcript)
 
         newWords.forEach((w: string) => {
           const clean = w.replace(/[^a-z']/g, '')
@@ -108,5 +110,5 @@ export function useSpeechRecognition(
     }
   }, [enabled, start])
 
-  return { listening, supported }
+  return { listening, supported, lastRaw }
 }
