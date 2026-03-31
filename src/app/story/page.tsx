@@ -68,9 +68,10 @@ function StoryScreen() {
   const paragraphs = useMemo(() => story ? toParagraphs(story.story) : [], [story])
   const words = useMemo(() => paragraphs.flatMap(p => p.words), [paragraphs])
 
-  // Keep hot refs in sync — callbacks read these instead of closing over state
+  // Assign synchronously during render so callbacks always see fresh values.
+  // useEffect is too late here — React Compiler may skip the sync entirely.
   const wordsRef = useRef<WordToken[]>([])
-  useEffect(() => { wordsRef.current = words }, [words])
+  wordsRef.current = words
   useEffect(() => { currentWordIndexRef.current = currentWordIndex }, [currentWordIndex])
 
   // ── Fetch story ─────────────────────────────────────────────────────────────
