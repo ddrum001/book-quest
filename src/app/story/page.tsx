@@ -86,6 +86,8 @@ const HOMOPHONES: Record<string, string> = {
   'male': 'mail',
   // stare / stair
   'stair': 'stare',
+  // Erin / Aaron (recognizer often transcribes the name as Aaron)
+  'aaron': 'erin',
   // night / knight
   'knight': 'night',
   // not / knot
