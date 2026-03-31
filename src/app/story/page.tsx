@@ -68,10 +68,6 @@ function StoryScreen() {
   const paragraphs = useMemo(() => story ? toParagraphs(story.story) : [], [story])
   const words = useMemo(() => paragraphs.flatMap(p => p.words), [paragraphs])
 
-  // Assign synchronously during render so callbacks always see fresh values.
-  // useEffect is too late here — React Compiler may skip the sync entirely.
-  const wordsRef = useRef<WordToken[]>([])
-  wordsRef.current = words
   useEffect(() => { currentWordIndexRef.current = currentWordIndex }, [currentWordIndex])
 
   // ── Fetch story ─────────────────────────────────────────────────────────────
@@ -96,7 +92,6 @@ function StoryScreen() {
   }, [currentWordIndex, phase])
 
   // ── 4-second hint timer ─────────────────────────────────────────────────────
-  // Stable: reads words via ref so it never needs words in its dep array
   const resetHintTimer = useCallback(() => {
     setShowHint(false)
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
@@ -105,43 +100,39 @@ function StoryScreen() {
       const idx = currentWordIndexRef.current
       setShowHint(true)
       setStumbleWords(prev => {
-        const word = wordsRef.current[idx]?.clean
+        const word = words[idx]?.clean
         if (!word) return prev
         const next = new Set(prev)
         next.add(word)
         return next
       })
     }, 4000)
-  }, []) // stable — all reads go through refs
+  }, [words])
 
   // ── Handle a spoken word ────────────────────────────────────────────────────
-  // Stable: reads words via ref so the React Compiler can't over-memoize it
   const handleSpokenWord = useCallback((spoken: string) => {
     if (!isReadingRef.current) return
-    const currentWords = wordsRef.current
     const idx = currentWordIndexRef.current
-    if (idx >= currentWords.length) return
+    if (idx >= words.length) return
 
-    if (currentWords[idx].clean === spoken) {
+    if (words[idx].clean === spoken) {
       setSpokenIndices(prev => {
         const next = new Set(prev)
         next.add(idx)
         return next
       })
-
       const newIdx = idx + 1
       currentWordIndexRef.current = newIdx
       setCurrentWordIndex(newIdx)
       resetHintTimer()
-
-      if (newIdx >= currentWords.length) {
+      if (newIdx >= words.length) {
         isReadingRef.current = false
         setSpeechEnabled(false)
         if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
         setPhase('done')
       }
     }
-  }, [resetHintTimer]) // resetHintTimer is also stable
+  }, [words, resetHintTimer])
 
   const { listening, supported, lastRaw } = useSpeechRecognition(handleSpokenWord, speechEnabled)
 
