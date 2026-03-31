@@ -23,12 +23,23 @@ export async function GET(request: NextRequest) {
         role: 'user',
         content: `Write a short children's story for a 3rd-grade reader (Lexile 580–650L) set in the "${themeName}" world.
 
+The story is for Erin, an 8-year-old girl with a big personality. Use this profile to make the story feel personal and specific to her — don't use all of it, just pick what fits naturally:
+
+About Erin:
+- Loves Minecraft and building/engineering things (CrunchLabs is her favourite YouTube channel)
+- Has a pet bunny named Trixie who could cameo in stories
+- Has a 4-year-old brother named Sebastian who sometimes tags along
+- Is a Disney fan and loves Disneyland; also loves the Disney Channel series Zombies
+- Has a contrarian streak — she likes things that feel a bit niche or discovery-like, NOT things that are overly mainstream or "too popular"
+- Lives in Northern California with a big family; cousins named Cillian, Savannah, and Landon sometimes appear
+- The story's hero should be a girl (Erin herself, or a character like her)
+
 Rules:
 - 180–200 words total
 - Engaging plot with a clear beginning, middle, and end
-- Suitable for an 8-year-old girl
 - Include exactly 3 vocabulary spotlight words that are slightly challenging (4th-grade level); use each naturally in the story
 - No chapter breaks or section headers — one continuous prose story
+- Keep the tone fun, a little adventurous, and never condescending
 
 Return ONLY valid JSON, no markdown fences, no extra text:
 {
