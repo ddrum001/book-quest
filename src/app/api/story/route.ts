@@ -42,6 +42,7 @@ Rules:
 - Break the story into 3–4 short paragraphs (2–4 sentences each) separated by a blank line — no wall of text
 - No chapter titles or section headers
 - Keep the tone fun, a little adventurous, and never condescending
+- IMPORTANT: After introducing a character by name once, use pronouns (she/her/he/his/they) for the rest of the story — avoid repeating names like "Erin", "Trixie", or "Sebastian" since voice recognition struggles with proper nouns
 
 Return ONLY valid JSON, no markdown fences, no extra text:
 {
