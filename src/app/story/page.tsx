@@ -115,13 +115,19 @@ function StoryScreen() {
     const idx = currentWordIndexRef.current
     if (idx >= words.length) return
 
-    if (words[idx].clean === spoken) {
+    // Lookahead of 1: catches up if the recognizer skips a word,
+    // without allowing large jumps that let Erin skip ahead.
+    const matchIdx = words[idx]?.clean === spoken ? idx
+      : words[idx + 1]?.clean === spoken ? idx + 1
+      : -1
+
+    if (matchIdx !== -1) {
       setSpokenIndices(prev => {
         const next = new Set(prev)
-        next.add(idx)
+        for (let i = idx; i <= matchIdx; i++) next.add(i)
         return next
       })
-      const newIdx = idx + 1
+      const newIdx = matchIdx + 1
       currentWordIndexRef.current = newIdx
       setCurrentWordIndex(newIdx)
       resetHintTimer()
