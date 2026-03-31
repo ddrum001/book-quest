@@ -100,8 +100,8 @@ function StoryScreen() {
     const idx = currentWordIndexRef.current
     if (idx >= words.length) return
 
-    // Fuzzy: look up to 3 words ahead to allow natural speech pace
-    for (let offset = 0; offset <= 3; offset++) {
+    // Fuzzy: look up to 2 words ahead to allow natural speech pace
+    for (let offset = 0; offset <= 2; offset++) {
       const targetIdx = idx + offset
       if (targetIdx >= words.length) break
 

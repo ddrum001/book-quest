@@ -31,22 +31,31 @@ export function useSpeechRecognition(
     recognition.interimResults = true
     recognition.lang = 'en-US'
 
-    let lastTranscript = ''
+    // Track the last-seen transcript per result index so we only emit NEW words
+    const lastTranscriptPerResult = new Map<number, string>()
 
     recognition.onstart = () => setListening(true)
 
     recognition.onresult = (event: any) => {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript.toLowerCase().trim()
-        if (transcript === lastTranscript) continue
-        lastTranscript = transcript
+        const prev = lastTranscriptPerResult.get(i) ?? ''
+        if (transcript === prev) continue
+        lastTranscriptPerResult.set(i, transcript)
 
-        // Emit each new word individually
-        const words = transcript.split(/\s+/).filter(Boolean)
-        words.forEach((w: string) => {
+        // Only emit words that are NEW since the last update for this result
+        const prevWords = prev.split(/\s+/).filter(Boolean)
+        const allWords = transcript.split(/\s+/).filter(Boolean)
+        const newWords = allWords.slice(prevWords.length)
+
+        newWords.forEach((w: string) => {
           const clean = w.replace(/[^a-z']/g, '')
           if (clean) onWordRef.current(clean)
         })
+
+        if (event.results[i].isFinal) {
+          lastTranscriptPerResult.clear()
+        }
       }
     }
 
