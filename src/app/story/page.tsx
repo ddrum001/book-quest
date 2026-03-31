@@ -16,10 +16,93 @@ interface WordToken {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// Collapse homophones to one canonical form so "their" matches "there" etc.
+const HOMOPHONES: Record<string, string> = {
+  // there / their / they're
+  'their': 'there', "they're": 'there',
+  // to / too / two
+  'too': 'to', 'two': 'to',
+  // your / you're
+  "you're": 'your',
+  // its / it's
+  "it's": 'its',
+  // here / hear
+  'hear': 'here',
+  // know / no
+  'know': 'no',
+  // new / knew
+  'knew': 'new',
+  // one / won
+  'won': 'one',
+  // by / bye / buy
+  'bye': 'by', 'buy': 'by',
+  // for / four
+  'four': 'for',
+  // sea / see
+  'see': 'sea',
+  // be / bee
+  'bee': 'be',
+  // right / write
+  'write': 'right',
+  // meet / meat
+  'meat': 'meet',
+  // week / weak
+  'weak': 'week',
+  // wear / where
+  'where': 'wear',
+  // bare / bear
+  'bear': 'bare',
+  // made / maid
+  'maid': 'made',
+  // wait / weight
+  'weight': 'wait',
+  // way / weigh
+  'weigh': 'way',
+  // which / witch
+  'witch': 'which',
+  // so / sew
+  'sew': 'so',
+  // tale / tail
+  'tail': 'tale',
+  // role / roll
+  'roll': 'role',
+  // sail / sale
+  'sale': 'sail',
+  // sun / son
+  'son': 'sun',
+  // flower / flour
+  'flour': 'flower',
+  // peace / piece
+  'piece': 'peace',
+  // pair / pear
+  'pear': 'pair',
+  // rain / reign
+  'reign': 'rain', 'rein': 'rain',
+  // plane / plain
+  'plain': 'plane',
+  // whole / hole
+  'hole': 'whole',
+  // mail / male
+  'male': 'mail',
+  // stare / stair
+  'stair': 'stare',
+  // night / knight
+  'knight': 'night',
+  // not / knot
+  'knot': 'not',
+  // road / rode
+  'rode': 'road',
+}
+
+function normalize(word: string): string {
+  const clean = word.toLowerCase().replace(/[^a-z']/g, '')
+  return HOMOPHONES[clean] ?? clean
+}
+
 function tokenize(text: string): WordToken[] {
   return text.split(/\s+/).filter(Boolean).map(text => ({
     text,
-    clean: text.toLowerCase().replace(/[^a-z']/g, ''),
+    clean: normalize(text),
   }))
 }
 
@@ -115,10 +198,9 @@ function StoryScreen() {
     const idx = currentWordIndexRef.current
     if (idx >= words.length) return
 
-    // Lookahead of 1: catches up if the recognizer skips a word,
-    // without allowing large jumps that let Erin skip ahead.
-    const matchIdx = words[idx]?.clean === spoken ? idx
-      : words[idx + 1]?.clean === spoken ? idx + 1
+    const norm = normalize(spoken)
+    const matchIdx = words[idx]?.clean === norm ? idx
+      : words[idx + 1]?.clean === norm ? idx + 1
       : -1
 
     if (matchIdx !== -1) {
