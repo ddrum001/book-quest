@@ -68,7 +68,9 @@ function StoryScreen() {
   const paragraphs = useMemo(() => story ? toParagraphs(story.story) : [], [story])
   const words = useMemo(() => paragraphs.flatMap(p => p.words), [paragraphs])
 
-  // Keep currentWordIndex ref in sync
+  // Keep hot refs in sync — callbacks read these instead of closing over state
+  const wordsRef = useRef<WordToken[]>([])
+  useEffect(() => { wordsRef.current = words }, [words])
   useEffect(() => { currentWordIndexRef.current = currentWordIndex }, [currentWordIndex])
 
   // ── Fetch story ─────────────────────────────────────────────────────────────
@@ -93,6 +95,7 @@ function StoryScreen() {
   }, [currentWordIndex, phase])
 
   // ── 4-second hint timer ─────────────────────────────────────────────────────
+  // Stable: reads words via ref so it never needs words in its dep array
   const resetHintTimer = useCallback(() => {
     setShowHint(false)
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
@@ -100,52 +103,44 @@ function StoryScreen() {
       if (!isReadingRef.current) return
       const idx = currentWordIndexRef.current
       setShowHint(true)
-      // Mark as stumble word
       setStumbleWords(prev => {
-        const word = words[idx]?.clean
+        const word = wordsRef.current[idx]?.clean
         if (!word) return prev
         const next = new Set(prev)
         next.add(word)
         return next
       })
     }, 4000)
-  }, [words])
+  }, []) // stable — all reads go through refs
 
   // ── Handle a spoken word ────────────────────────────────────────────────────
+  // Stable: reads words via ref so the React Compiler can't over-memoize it
   const handleSpokenWord = useCallback((spoken: string) => {
     if (!isReadingRef.current) return
+    const currentWords = wordsRef.current
     const idx = currentWordIndexRef.current
-    if (idx >= words.length) return
+    if (idx >= currentWords.length) return
 
-    // Strict: must say the current word exactly, no lookahead
-    for (let offset = 0; offset <= 0; offset++) {
-      const targetIdx = idx + offset
-      if (targetIdx >= words.length) break
+    if (currentWords[idx].clean === spoken) {
+      setSpokenIndices(prev => {
+        const next = new Set(prev)
+        next.add(idx)
+        return next
+      })
 
-      if (words[targetIdx].clean === spoken) {
-        // Mark all words from current up to (and including) target as spoken
-        setSpokenIndices(prev => {
-          const next = new Set(prev)
-          for (let i = idx; i <= targetIdx; i++) next.add(i)
-          return next
-        })
+      const newIdx = idx + 1
+      currentWordIndexRef.current = newIdx
+      setCurrentWordIndex(newIdx)
+      resetHintTimer()
 
-        const newIdx = targetIdx + 1
-        currentWordIndexRef.current = newIdx
-        setCurrentWordIndex(newIdx)
-        resetHintTimer()
-
-        if (newIdx >= words.length) {
-          // Story complete
-          isReadingRef.current = false
-          setSpeechEnabled(false)
-          if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
-          setPhase('done')
-        }
-        return
+      if (newIdx >= currentWords.length) {
+        isReadingRef.current = false
+        setSpeechEnabled(false)
+        if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+        setPhase('done')
       }
     }
-  }, [words, resetHintTimer])
+  }, [resetHintTimer]) // resetHintTimer is also stable
 
   const { listening, supported } = useSpeechRecognition(handleSpokenWord, speechEnabled)
 
