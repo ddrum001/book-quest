@@ -58,6 +58,7 @@ function StoryScreen() {
   const [stumbleWords, setStumbleWords] = useState<Set<string>>(new Set())
   const [showHint, setShowHint] = useState(false)
   const [speechEnabled, setSpeechEnabled] = useState(false)
+  const [lastHeard, setLastHeard] = useState('')
 
   // Stable refs for use inside callbacks
   const currentWordIndexRef = useRef(0)
@@ -121,6 +122,7 @@ function StoryScreen() {
     const idx = currentWordIndexRef.current
     if (idx >= currentWords.length) return
 
+    setLastHeard(spoken)
     if (currentWords[idx].clean === spoken) {
       setSpokenIndices(prev => {
         const next = new Set(prev)
@@ -314,7 +316,7 @@ function StoryScreen() {
       {story!.imagePrompt && (
         <div className="shrink-0 px-6 pb-4">
           <img
-            src={`https://image.pollinations.ai/prompt/${encodeURIComponent(story!.imagePrompt)}&width=800&height=380&nologo=true`}
+            src={`https://image.pollinations.ai/prompt/${encodeURIComponent(story!.imagePrompt)}?width=800&height=380&nologo=true`}
             alt="Story illustration"
             className="w-full rounded-3xl object-cover shadow-sm"
             style={{ maxHeight: '220px' }}
@@ -395,11 +397,9 @@ function StoryScreen() {
                 <p className="text-sm font-heading font-semibold text-ink leading-none">
                   {listening ? 'Listening…' : 'Reconnecting…'}
                 </p>
-                {!supported && (
-                  <p className="text-[11px] text-ink-muted font-body mt-0.5">
-                    Use Chrome or Safari
-                  </p>
-                )}
+                <p className="text-[11px] text-ink-muted font-body mt-0.5">
+                  {lastHeard ? `Heard: "${lastHeard}"` : (supported ? 'Say the yellow word' : 'Use Chrome or Safari')}
+                </p>
               </div>
             </div>
 
