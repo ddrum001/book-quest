@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'bookquest_unlocked'
-const CORRECT_PIN = process.env.NEXT_PUBLIC_APP_PIN ?? '0000'
+const CORRECT_PIN = '0706'
 
 export default function PinGate({ children }: { children: React.ReactNode }) {
   const [unlocked, setUnlocked] = useState<boolean | null>(null) // null = not checked yet
