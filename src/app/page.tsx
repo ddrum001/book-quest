@@ -4,33 +4,81 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getLevel, getXpInCurrentLevel, XP_PER_LEVEL, type User } from '@/lib/types'
+import { Avatar } from '@/components/Avatar'
+
+
+const DAILY_GOAL_SECS = 20 * 60
+
+function ptTodayBounds() {
+  const now = new Date()
+  const ptDateStr = new Intl.DateTimeFormat('sv', { timeZone: 'America/Los_Angeles' }).format(now)
+  const utcH = now.getUTCHours()
+  const ptH = parseInt(
+    new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', hour12: false }).format(now)
+  )
+  let off = ptH - utcH
+  if (off > 12) off -= 24
+  if (off < -12) off += 24
+  const [yr, mo, dy] = ptDateStr.split('-').map(Number)
+  const start = new Date(Date.UTC(yr, mo - 1, dy, -off, 0, 0, 0))
+  return { start, end: new Date(start.getTime() + 86_400_000) }
+}
+
+async function fetchTodaySeconds(userId: string): Promise<number> {
+  const supabase = createClient()
+  const { start, end } = ptTodayBounds()
+  const { data } = await supabase
+    .from('sessions')
+    .select('reading_seconds')
+    .eq('user_id', userId)
+    .gte('created_at', start.toISOString())
+    .lt('created_at', end.toISOString())
+  return (data ?? []).reduce(
+    (sum: number, s: { reading_seconds: number | null }) => sum + (s.reading_seconds ?? 0), 0
+  )
+}
 
 export default function HomePage() {
   const router = useRouter()
+
+  const [allUsers, setAllUsers] = useState<User[]>([])
   const [user, setUser] = useState<User | null>(null)
-  const [nameInput, setNameInput] = useState('')
+  const [todaySeconds, setTodaySeconds] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [showNewForm, setShowNewForm] = useState(false)
+  const [nameInput, setNameInput] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const userId = localStorage.getItem('bookquest_user_id')
-    if (!userId) {
+    async function load() {
+      const supabase = createClient()
+
+      // Always load all users so the picker has something to show
+      const { data: users } = await supabase
+        .from('users')
+        .select('*')
+        .order('child_name')
+      setAllUsers((users ?? []) as User[])
+
+      const userId = localStorage.getItem('bookquest_user_id')
+      if (!userId) { setLoading(false); return }
+
+      const found = (users ?? []).find((u: User) => u.id === userId)
+      if (!found) { localStorage.removeItem('bookquest_user_id'); setLoading(false); return }
+
+      setUser(found as User)
+      setTodaySeconds(await fetchTodaySeconds(userId))
       setLoading(false)
-      return
     }
-    const supabase = createClient()
-    supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => {
-        if (data) setUser(data as User)
-        else localStorage.removeItem('bookquest_user_id')
-        setLoading(false)
-      })
+    load()
   }, [])
+
+  async function handleSelectUser(selected: User) {
+    localStorage.setItem('bookquest_user_id', selected.id)
+    setUser(selected)
+    setTodaySeconds(await fetchTodaySeconds(selected.id))
+  }
 
   async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault()
@@ -38,6 +86,19 @@ export default function HomePage() {
     setCreating(true)
     setError('')
     const supabase = createClient()
+
+    // Check for an existing reader with the same name (case-insensitive)
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id, child_name')
+      .ilike('child_name', nameInput.trim())
+      .maybeSingle()
+    if (existing) {
+      setError(`A reader named "${existing.child_name}" already exists — pick them from the list!`)
+      setCreating(false)
+      return
+    }
+
     const { data, error: dbError } = await supabase
       .from('users')
       .insert({ child_name: nameInput.trim() })
@@ -48,11 +109,14 @@ export default function HomePage() {
       setCreating(false)
       return
     }
-    localStorage.setItem('bookquest_user_id', data.id)
-    setUser(data as User)
+    const newUser = data as User
+    localStorage.setItem('bookquest_user_id', newUser.id)
+    setAllUsers(prev => [...prev, newUser].sort((a, b) => a.child_name.localeCompare(b.child_name)))
+    setUser(newUser)
     setCreating(false)
   }
 
+  // ── Loading ───────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-parchment">
@@ -61,7 +125,47 @@ export default function HomePage() {
     )
   }
 
-  /* ── Name entry (first time) ───────────────────────────────────────── */
+  // ── User picker (no one logged in, users exist, not adding new) ───────────────
+  if (!user && allUsers.length > 0 && !showNewForm) {
+    return (
+      <div className="flex-1 flex flex-col bg-parchment min-h-screen">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
+          <div className="text-center">
+            <div className="text-7xl mb-3">📚</div>
+            <h1 className="text-4xl font-heading font-bold text-gold">Book Quest</h1>
+            <p className="text-ink-light font-body mt-1">Who&apos;s reading today?</p>
+          </div>
+          <div className="w-full max-w-sm flex flex-col gap-3">
+            {allUsers.map(u => (
+              <button
+                key={u.id}
+                onClick={() => handleSelectUser(u)}
+                className="w-full bg-white border border-gold/30 rounded-3xl px-5 py-4 flex items-center gap-4 text-left shadow-sm active:scale-95 transition-transform"
+              >
+                <Avatar equipped={u.avatar_equipped ?? {}} size={44} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-heading font-bold text-ink text-xl">{u.child_name}</p>
+                  <p className="text-ink-light font-body text-sm">
+                    Level {getLevel(u.total_xp)} · {u.stories_read} stories
+                    {(u.current_streak ?? 0) > 0 && ` · 🔥 ${u.current_streak}`}
+                  </p>
+                </div>
+                <span className="text-gold text-2xl">›</span>
+              </button>
+            ))}
+            <button
+              onClick={() => setShowNewForm(true)}
+              className="w-full bg-parchment border border-gold/20 rounded-3xl px-5 py-4 font-heading font-semibold text-ink-light text-center active:scale-95 transition-transform"
+            >
+              + Add new reader
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── New reader form (no existing users, or chose to add new) ─────────────────
   if (!user) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-parchment px-6">
@@ -92,12 +196,21 @@ export default function HomePage() {
           >
             {creating ? 'Starting quest…' : 'Start My Quest! 🚀'}
           </button>
+          {allUsers.length > 0 && (
+            <button
+              type="button"
+              onClick={() => { setShowNewForm(false); setNameInput(''); setError('') }}
+              className="text-ink-light font-heading text-sm text-center"
+            >
+              ← Back to reader list
+            </button>
+          )}
         </form>
       </div>
     )
   }
 
-  /* ── Home screen ───────────────────────────────────────────────────── */
+  // ── Home screen ───────────────────────────────────────────────────────────────
   const level = getLevel(user.total_xp)
   const xpInLevel = getXpInCurrentLevel(user.total_xp)
   const xpPercent = (xpInLevel / XP_PER_LEVEL) * 100
@@ -105,16 +218,21 @@ export default function HomePage() {
   return (
     <div className="flex-1 flex flex-col bg-parchment min-h-screen">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 pt-8 pb-4">
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-gold">📚 Book Quest</h1>
-          <p className="text-ink-light font-body">Welcome back, {user.child_name}!</p>
-        </div>
-        <div className="text-right">
-          <div className="text-lg font-heading font-bold text-ink">Level {level} Reader</div>
-          <div className="text-sm text-ink-light">
+      <header className="flex items-center gap-4 px-6 pt-8 pb-4">
+        <Avatar equipped={user.avatar_equipped ?? {}} size={72} />
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-heading font-bold text-gold truncate">
+            {user.child_name}&apos;s Quest
+          </h1>
+          <p className="text-ink font-heading font-semibold">Level {level} Reader</p>
+          <p className="text-ink-light font-body text-sm">
             {user.total_stars} ⭐ &middot; {user.stories_read} stories
-          </div>
+            {(user.current_streak ?? 0) > 0 && ` · 🔥 ${user.current_streak}`}
+          </p>
+        </div>
+        <div className="shrink-0 flex items-center gap-1 bg-white border border-gold/30 rounded-2xl px-3 py-1.5">
+          <span>🪙</span>
+          <span className="font-heading font-bold text-gold">{user.coins ?? 0}</span>
         </div>
       </header>
 
@@ -129,6 +247,36 @@ export default function HomePage() {
             className="h-full bg-gold rounded-full transition-all duration-700"
             style={{ width: `${xpPercent}%` }}
           />
+        </div>
+      </div>
+
+      {/* Daily reading goal */}
+      <div className="px-6 mb-2">
+        <div className="bg-white rounded-3xl px-5 pt-4 pb-5 border border-gold/20 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-heading font-semibold text-ink-muted tracking-widest">
+              TODAY&apos;S READING
+            </p>
+            <span className="font-heading font-bold text-ink text-sm">
+              {Math.floor(todaySeconds / 60)}m {todaySeconds % 60}s
+              {' '}<span className="text-ink-muted font-normal">/ 20 min</span>
+            </span>
+          </div>
+          <div className="h-3 bg-parchment rounded-full overflow-hidden border border-gold/20">
+            <div
+              className="h-full bg-gold rounded-full transition-all duration-700"
+              style={{ width: `${Math.min(100, (todaySeconds / DAILY_GOAL_SECS) * 100)}%` }}
+            />
+          </div>
+          {todaySeconds >= DAILY_GOAL_SECS ? (
+            <p className="text-green-600 font-heading font-semibold text-xs text-center mt-2">
+              🎉 Daily goal reached!
+            </p>
+          ) : (
+            <p className="text-ink-muted font-body text-xs text-center mt-2">
+              {Math.floor((DAILY_GOAL_SECS - todaySeconds) / 60)}m {(DAILY_GOAL_SECS - todaySeconds) % 60}s left to reach today&apos;s goal
+            </p>
+          )}
         </div>
       </div>
 
@@ -148,22 +296,24 @@ export default function HomePage() {
       </div>
 
       {/* Bottom nav */}
-      <nav className="flex justify-around px-6 pb-10 pt-4 border-t border-gold/20">
+      <nav className="flex justify-around px-4 pb-10 pt-4 border-t border-gold/20">
         <button className="flex flex-col items-center gap-1 text-gold">
           <span className="text-2xl">🏠</span>
           <span className="text-xs font-heading font-semibold">Home</span>
         </button>
-        <button
-          onClick={() => router.push('/badges')}
-          className="flex flex-col items-center gap-1 text-ink-light"
-        >
+        <button onClick={() => router.push('/badges')} className="flex flex-col items-center gap-1 text-ink-light">
           <span className="text-2xl">🏆</span>
           <span className="text-xs font-heading">Badges</span>
         </button>
-        <button
-          onClick={() => router.push('/parent')}
-          className="flex flex-col items-center gap-1 text-ink-light"
-        >
+        <button onClick={() => router.push('/store')} className="flex flex-col items-center gap-1 text-ink-light">
+          <span className="text-2xl">🛍️</span>
+          <span className="text-xs font-heading">Store</span>
+        </button>
+        <button onClick={() => router.push('/users')} className="flex flex-col items-center gap-1 text-ink-light">
+          <span className="text-2xl">👤</span>
+          <span className="text-xs font-heading">Switch</span>
+        </button>
+        <button onClick={() => router.push('/parent')} className="flex flex-col items-center gap-1 text-ink-light">
           <span className="text-2xl">🔒</span>
           <span className="text-xs font-heading">Parent</span>
         </button>

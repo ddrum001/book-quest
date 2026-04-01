@@ -88,6 +88,8 @@ const HOMOPHONES: Record<string, string> = {
   'stair': 'stare',
   // Erin / Aaron (recognizer often transcribes the name as Aaron)
   'aaron': 'erin',
+  // Erin's / errands
+  'errands': "erin's",
   // night / knight
   'knight': 'night',
   // not / knot
@@ -141,8 +143,10 @@ function StoryScreen() {
   const [currentWordIndex, setCurrentWordIndex] = useState(0)
   const [spokenIndices, setSpokenIndices] = useState<Set<number>>(new Set())
   const [stumbleWords, setStumbleWords] = useState<Set<string>>(new Set())
+  const [skippedWords, setSkippedWords] = useState<Set<string>>(new Set())
   const [showHint, setShowHint] = useState(false)
   const [speechEnabled, setSpeechEnabled] = useState(false)
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false)
 
   // Stable refs for use inside callbacks
   const currentWordIndexRef = useRef(0)
@@ -150,6 +154,12 @@ function StoryScreen() {
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const audioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([])
+
+  // Active reading time tracking
+  // Only counts seconds when speech has been heard within the last 45 s
+  const IDLE_THRESHOLD = 25_000
+  const activeSecondsRef = useRef(0)
+  const lastActivityRef = useRef(0)
 
   // ── Text-to-speech helper ───────────────────────────────────────────────────
   const speakWord = useCallback((word: string) => {
@@ -165,6 +175,19 @@ function StoryScreen() {
   const words = useMemo(() => paragraphs.flatMap(p => p.words), [paragraphs])
 
   useEffect(() => { currentWordIndexRef.current = currentWordIndex }, [currentWordIndex])
+
+  // Start active-time counter when reading begins; pause it when idle
+  useEffect(() => {
+    if (phase !== 'reading') return
+    lastActivityRef.current = Date.now()
+    const interval = setInterval(() => {
+      if (Date.now() - lastActivityRef.current < IDLE_THRESHOLD) {
+        activeSecondsRef.current += 1
+      }
+    }, 1000)
+    return () => clearInterval(interval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase])
 
   // ── Fetch story ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -188,9 +211,9 @@ function StoryScreen() {
   }, [currentWordIndex, phase])
 
   // ── Hint + audio timers ─────────────────────────────────────────────────────
-  const resetHintTimer = useCallback(() => {
+  const resetHintTimer = useCallback((cancelSpeech = true) => {
     setShowHint(false)
-    window.speechSynthesis?.cancel()
+    if (cancelSpeech) window.speechSynthesis?.cancel()
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
     if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
 
@@ -255,6 +278,13 @@ function StoryScreen() {
 
   const { listening, supported, lastRaw } = useSpeechRecognition(handleSpokenWord, speechEnabled)
 
+  // Any recognised speech (right or wrong) resets the idle clock
+  useEffect(() => {
+    if (lastRaw && phase === 'reading') {
+      lastActivityRef.current = Date.now()
+    }
+  }, [lastRaw, phase])
+
   // ── Actions ─────────────────────────────────────────────────────────────────
   function handleStartReading() {
     isReadingRef.current = true
@@ -265,13 +295,40 @@ function StoryScreen() {
     wordRefs.current[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
-  function handleSkip() {
+  function handleSkipWord() {
+    const idx = currentWordIndexRef.current
+    if (idx >= words.length) return
+
+    const word = words[idx]
+    setSkippedWords(prev => { const n = new Set(prev); n.add(word.clean); return n })
+    setSpokenIndices(prev => { const n = new Set(prev); n.add(idx); return n })
+
+    const newIdx = idx + 1
+    currentWordIndexRef.current = newIdx
+    setCurrentWordIndex(newIdx)
+
+    // Pause the reading timer — only resume when she actually speaks again
+    lastActivityRef.current = 0
+
+    // Speak the skipped word without cancelling it via resetHintTimer
+    const display = word.text.replace(/[^a-zA-Z']/g, '')
+    resetHintTimer(false) // clear timers but keep speech queue intact
+    speakWord(display)    // speakWord cancels any prior utterance then queues this word
+
+    if (newIdx >= words.length) {
+      isReadingRef.current = false
+      setSpeechEnabled(false)
+      setPhase('done')
+    }
+  }
+
+  function handleEndStory() {
     isReadingRef.current = false
     setSpeechEnabled(false)
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
     if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
     window.speechSynthesis?.cancel()
-    setPhase('done')
+    router.push('/')
   }
 
   function handleBack() {
@@ -315,6 +372,48 @@ function StoryScreen() {
   // ── Done ────────────────────────────────────────────────────────────────────
   if (phase === 'done') {
     const stumbleList = Array.from(stumbleWords)
+    const skippedList = Array.from(skippedWords)
+
+    async function handleClaimRewards() {
+      const userId = localStorage.getItem('bookquest_user_id')
+      if (!userId) { router.push('/'); return }
+
+      const res = await fetch('/api/complete-story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          theme: themeId,
+          storyText: story?.story ?? '',
+          stumbleWords: stumbleList,
+          skippedWords: skippedList,
+          vocabWords: story?.vocab.map(v => v.word) ?? [],
+          readingSeconds: activeSecondsRef.current,
+        }),
+      })
+      const data = await res.json()
+
+      const params = new URLSearchParams({
+        theme: themeId,
+        xp: String(data.xpGained ?? 0),
+        stars: String(data.starsEarned ?? 1),
+        totalXp: String(data.newTotalXp ?? 0),
+        xpInLevel: String(data.xpInLevel ?? 0),
+        level: String(data.levelAfter ?? 1),
+        leveledUp: String(data.leveledUp ?? false),
+        badges: (data.newBadges ?? []).join(','),
+        stumbles: stumbleList.join(','),
+        skips: skippedList.join(','),
+        readSecs: String(data.sessionSeconds ?? 0),
+        todaySecs: String(data.todaySeconds ?? 0),
+        streak: String(data.currentStreak ?? 0),
+        coins: String(data.coinsGained ?? 0),
+      })
+      router.push(`/reward?${params.toString()}`)
+    }
+
+    const allDifficult = [...new Set([...stumbleList, ...skippedList])]
+
     return (
       <div className="flex flex-col bg-parchment min-h-screen">
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6 text-center">
@@ -324,17 +423,14 @@ function StoryScreen() {
             <p className="text-ink-light font-body mt-1">You finished the whole story!</p>
           </div>
 
-          {stumbleList.length > 0 && (
+          {allDifficult.length > 0 && (
             <div className="w-full max-w-sm bg-white rounded-3xl p-5 border-2 border-gold/20 text-left">
               <p className="font-heading font-semibold text-ink mb-3 text-center">
                 Words to practise 📚
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
-                {stumbleList.map(w => (
-                  <span
-                    key={w}
-                    className="bg-yellow-50 border border-yellow-300 text-yellow-800 font-heading font-semibold px-3 py-1.5 rounded-full text-sm capitalize"
-                  >
+                {allDifficult.map(w => (
+                  <span key={w} className="bg-yellow-50 border border-yellow-300 text-yellow-800 font-heading font-semibold px-3 py-1.5 rounded-full text-sm capitalize">
                     {w}
                   </span>
                 ))}
@@ -342,7 +438,7 @@ function StoryScreen() {
             </div>
           )}
 
-          {stumbleList.length === 0 && (
+          {allDifficult.length === 0 && (
             <div className="bg-green-50 border-2 border-green-200 rounded-3xl px-6 py-4">
               <p className="text-green-700 font-heading font-semibold">
                 🌟 No stumble words — perfect reading!
@@ -351,17 +447,14 @@ function StoryScreen() {
           )}
 
           <button
-            onClick={() => router.push(`/quiz?theme=${themeId}`)}
+            onClick={handleClaimRewards}
             className="w-full max-w-xs text-white font-heading font-bold text-xl py-5 rounded-3xl shadow-lg active:scale-95 transition-transform"
             style={{ backgroundColor: theme.color }}
           >
-            Take the Quiz! 🎯
+            Claim Rewards! 🏆
           </button>
 
-          <button
-            onClick={() => router.push('/')}
-            className="text-ink-light font-heading text-sm"
-          >
+          <button onClick={() => router.push('/')} className="text-ink-light font-heading text-sm">
             Back to Home
           </button>
         </div>
@@ -505,32 +598,71 @@ function StoryScreen() {
         )}
 
         {phase === 'reading' && (
-          <div className="flex gap-3">
-            {/* Mic status */}
-            <div className="flex-1 flex items-center gap-2.5 bg-white rounded-2xl px-4 py-3 border border-gold/20">
+          <div className="flex flex-col gap-2">
+            {/* Mic status — full width */}
+            <div className="flex items-center gap-2.5 bg-white rounded-2xl px-4 py-3 border border-gold/20">
               <span className={`text-xl ${listening ? 'animate-pulse' : 'opacity-40'}`}>
                 {listening ? '🎤' : '🔇'}
               </span>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-heading font-semibold text-ink leading-none">
                   {listening ? 'Listening…' : 'Reconnecting…'}
                 </p>
-                <p className="text-[11px] text-ink-muted font-body mt-0.5">
+                <p className="text-[11px] text-ink-muted font-body mt-0.5 truncate">
                   {lastRaw ? `Heard: "${lastRaw}"` : (supported ? 'Say the yellow word' : 'Use Chrome or Safari')}
                 </p>
               </div>
             </div>
 
-            {/* Skip button */}
-            <button
-              onClick={handleSkip}
-              className="bg-white border border-gold/30 font-heading text-sm font-semibold text-ink-light px-5 py-3 rounded-2xl active:scale-95 transition-transform"
-            >
-              Skip
-            </button>
+            {/* Word skip + end story buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleSkipWord}
+                className="flex-1 bg-amber-50 border border-amber-300 text-amber-800 font-heading font-semibold text-sm py-3 rounded-2xl active:scale-95 transition-transform"
+              >
+                🔊 Skip word
+              </button>
+              <button
+                onClick={() => setShowSkipConfirm(true)}
+                className="bg-white border border-red-200 text-red-400 font-heading text-sm font-semibold px-4 py-3 rounded-2xl active:scale-95 transition-transform"
+              >
+                End Story
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* End-story confirmation modal */}
+      {showSkipConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 pb-0">
+          <div className="bg-white rounded-t-3xl w-full max-w-lg px-6 pt-6 pb-10">
+            <div className="text-5xl text-center mb-3">📖</div>
+            <h2 className="text-xl font-heading font-bold text-ink text-center mb-2">
+              End the story?
+            </h2>
+            <p className="text-ink-light font-body text-sm text-center mb-6">
+              This will stop the story early. It won&apos;t count as completed,
+              so you won&apos;t earn any XP, stars, or streak progress.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setShowSkipConfirm(false)}
+                className="w-full text-white font-heading font-bold text-lg py-4 rounded-2xl active:scale-95 transition-transform"
+                style={{ backgroundColor: theme.color }}
+              >
+                Keep Reading!
+              </button>
+              <button
+                onClick={handleEndStory}
+                className="w-full bg-white border border-red-200 text-red-400 font-heading font-semibold text-base py-4 rounded-2xl active:scale-95 transition-transform"
+              >
+                Yes, end the story
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
