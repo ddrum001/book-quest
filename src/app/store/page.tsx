@@ -184,6 +184,26 @@ export default function StorePage() {
               FREE — no coins needed!
             </p>
 
+            {/* Style presets */}
+            <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm">
+              <p className="font-heading font-bold text-ink mb-3">Style Preset</p>
+              <div className="flex gap-3">
+                {[
+                  { label: '👧 Girl',   top: 'longButNotTooLong', clothing: 'shirtScoopNeck', clothesColor: 'ff5c5c' },
+                  { label: '👦 Boy',    top: 'shortCurly',        clothing: 'shirtCrewNeck',  clothesColor: '5199e4' },
+                  { label: '🌈 Neutral',top: 'curly',             clothing: 'hoodie',         clothesColor: '65c9ff' },
+                ].map(preset => (
+                  <button
+                    key={preset.label}
+                    onClick={() => saveEquipped({ ...equipped, top: preset.top, clothing: preset.clothing, clothesColor: preset.clothesColor })}
+                    className="flex-1 py-3 rounded-2xl font-heading font-semibold text-sm border border-gold/20 bg-parchment text-ink active:scale-95 transition-transform"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Skin tone */}
             <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm">
               <p className="font-heading font-bold text-ink mb-3">Skin Tone</p>
