@@ -148,7 +148,18 @@ function StoryScreen() {
   const currentWordIndexRef = useRef(0)
   const isReadingRef = useRef(false)
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const audioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([])
+
+  // ── Text-to-speech helper ───────────────────────────────────────────────────
+  const speakWord = useCallback((word: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(word)
+    utterance.rate = 0.85
+    utterance.lang = 'en-US'
+    window.speechSynthesis.speak(utterance)
+  }, [])
 
   const paragraphs = useMemo(() => story ? toParagraphs(story.story) : [], [story])
   const words = useMemo(() => paragraphs.flatMap(p => p.words), [paragraphs])
@@ -176,10 +187,14 @@ function StoryScreen() {
     })
   }, [currentWordIndex, phase])
 
-  // ── 4-second hint timer ─────────────────────────────────────────────────────
+  // ── Hint + audio timers ─────────────────────────────────────────────────────
   const resetHintTimer = useCallback(() => {
     setShowHint(false)
+    window.speechSynthesis?.cancel()
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
+
+    // 4 s → show visual hint
     hintTimerRef.current = setTimeout(() => {
       if (!isReadingRef.current) return
       const idx = currentWordIndexRef.current
@@ -192,7 +207,19 @@ function StoryScreen() {
         return next
       })
     }, 4000)
-  }, [words])
+
+    // 8 s → speak the word aloud (and repeat every 8 s while still stuck)
+    const scheduleAudio = (delay: number) => {
+      audioTimerRef.current = setTimeout(() => {
+        if (!isReadingRef.current) return
+        const idx = currentWordIndexRef.current
+        const word = words[idx]?.text.replace(/[^a-zA-Z']/g, '')
+        if (word) speakWord(word)
+        scheduleAudio(8000)  // repeat every 8 s until she says it
+      }, delay)
+    }
+    scheduleAudio(8000)
+  }, [words, speakWord])
 
   // ── Handle a spoken word ────────────────────────────────────────────────────
   const handleSpokenWord = useCallback((spoken: string) => {
@@ -215,10 +242,12 @@ function StoryScreen() {
       currentWordIndexRef.current = newIdx
       setCurrentWordIndex(newIdx)
       resetHintTimer()
+      window.speechSynthesis?.cancel()
       if (newIdx >= words.length) {
         isReadingRef.current = false
         setSpeechEnabled(false)
         if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+        if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
         setPhase('done')
       }
     }
@@ -240,6 +269,8 @@ function StoryScreen() {
     isReadingRef.current = false
     setSpeechEnabled(false)
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
+    window.speechSynthesis?.cancel()
     setPhase('done')
   }
 
@@ -247,6 +278,8 @@ function StoryScreen() {
     isReadingRef.current = false
     setSpeechEnabled(false)
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
+    window.speechSynthesis?.cancel()
     router.back()
   }
 
@@ -448,12 +481,17 @@ function StoryScreen() {
       <div className="shrink-0 px-6 pb-10 pt-3 border-t border-gold/20 flex flex-col gap-3">
         {/* Hint banner */}
         {phase === 'reading' && showHint && words[currentWordIndex] && (
-          <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl px-5 py-3 text-center">
-            <p className="text-xs text-amber-600 font-heading font-semibold mb-0.5">Next word:</p>
+          <button
+            onClick={() => speakWord(words[currentWordIndex].text.replace(/[^a-zA-Z']/g, ''))}
+            className="w-full bg-amber-50 border-2 border-amber-300 rounded-2xl px-5 py-3 text-center active:scale-95 transition-transform"
+          >
+            <p className="text-xs text-amber-600 font-heading font-semibold mb-0.5">
+              Next word: <span className="ml-1">🔊 tap to hear it</span>
+            </p>
             <p className="text-3xl font-heading font-bold text-amber-800">
               {words[currentWordIndex].text.replace(/[^a-zA-Z']/g, '')}
             </p>
-          </div>
+          </button>
         )}
 
         {phase === 'ready' && (
