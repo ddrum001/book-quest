@@ -4,15 +4,16 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { STORE_ITEMS, type StoreItem, type User } from '@/lib/types'
-import { SKIN_TONES, HAIR_COLORS, EYE_COLORS } from '@/lib/avatar'
+import { SKIN_TONES, HAIR_COLORS, EYE_STYLES, EYEBROW_STYLES, MOUTH_STYLES } from '@/lib/avatar'
 import { Avatar } from '@/components/Avatar'
 
-type Tab = 'costume' | 'accessory' | 'background' | 'customize'
+type Tab = 'top' | 'clothing' | 'accessories' | 'backgroundColor' | 'customize'
 const TABS: { key: Tab; label: string; emoji: string }[] = [
-  { key: 'costume',    label: 'Costumes',    emoji: '🎭' },
-  { key: 'accessory',  label: 'Accessories', emoji: '✨' },
-  { key: 'background', label: 'Backgrounds', emoji: '🎨' },
-  { key: 'customize',  label: 'Customize',   emoji: '🪄' },
+  { key: 'top',             label: 'Hair',        emoji: '💇' },
+  { key: 'clothing',        label: 'Outfits',     emoji: '👕' },
+  { key: 'accessories',     label: 'Accessories', emoji: '✨' },
+  { key: 'backgroundColor', label: 'Backgrounds', emoji: '🎨' },
+  { key: 'customize',       label: 'Customize',   emoji: '🪄' },
 ]
 
 export default function StorePage() {
@@ -20,7 +21,7 @@ export default function StorePage() {
   const [user, setUser] = useState<User | null>(null)
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set())
   const [equipped, setEquipped] = useState<Record<string, string>>({})
-  const [tab, setTab] = useState<Tab>('costume')
+  const [tab, setTab] = useState<Tab>('top')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -49,9 +50,8 @@ export default function StorePage() {
     await supabase.from('users').update({ avatar_equipped: next }).eq('id', userId!)
   }
 
-  async function handleAppearance(key: 'skin' | 'hair' | 'eyes', value: string) {
-    const next = { ...equipped, [key]: value }
-    await saveEquipped(next)
+  async function handleAppearance(key: string, value: string) {
+    await saveEquipped({ ...equipped, [key]: value })
   }
 
   async function handleEquip(item: StoreItem) {
@@ -75,10 +75,7 @@ export default function StorePage() {
     setOwnedIds(prev => new Set([...prev, item.id]))
     // Auto-equip on purchase
     const next = { ...equipped, [item.category]: item.id }
-    setEquipped(next)
-    setUser(prev => prev ? { ...prev, avatar_equipped: next } : prev)
-    const supabase2 = createClient()
-    await supabase2.from('users').update({ avatar_equipped: next }).eq('id', userId)
+    await saveEquipped(next)
     setBusy(null)
   }
 
@@ -90,9 +87,7 @@ export default function StorePage() {
     )
   }
 
-  const storeItems = tab !== 'customize'
-    ? STORE_ITEMS.filter(i => i.category === tab)
-    : []
+  const storeItems = tab !== 'customize' ? STORE_ITEMS.filter(i => i.category === tab) : []
 
   return (
     <div className="flex flex-col bg-parchment min-h-screen max-h-screen">
@@ -112,19 +107,17 @@ export default function StorePage() {
 
       {/* Avatar preview */}
       <div className="shrink-0 flex justify-center py-3">
-        <Avatar equipped={equipped} variant="full" size={110} />
+        <Avatar equipped={equipped} variant="full" size={120} />
       </div>
 
-      {/* Tabs — scroll horizontally if needed */}
+      {/* Tabs */}
       <div className="shrink-0 flex gap-2 px-6 pb-3 overflow-x-auto">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`shrink-0 px-3 py-2 rounded-2xl font-heading font-semibold text-sm transition-colors ${
-              tab === t.key
-                ? 'bg-gold text-white'
-                : 'bg-white border border-gold/20 text-ink-light'
+              tab === t.key ? 'bg-gold text-white' : 'bg-white border border-gold/20 text-ink-light'
             }`}
           >
             {t.emoji} {t.label}
@@ -150,8 +143,8 @@ export default function StorePage() {
               }`}
             >
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0"
-                style={{ backgroundColor: item.color ?? '#FDF6EC' }}
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0 border border-black/5"
+                style={{ backgroundColor: item.color }}
               >
                 {item.emoji}
               </div>
@@ -159,9 +152,7 @@ export default function StorePage() {
                 <p className="font-heading font-bold text-ink">{item.name}</p>
                 <p className="text-ink-light font-body text-xs">{item.description}</p>
                 {!owned && (
-                  <p className="text-gold font-heading font-semibold text-sm mt-0.5">
-                    {item.cost} 🪙
-                  </p>
+                  <p className="text-gold font-heading font-semibold text-sm mt-0.5">{item.cost} 🪙</p>
                 )}
               </div>
               {owned ? (
@@ -197,17 +188,17 @@ export default function StorePage() {
             <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm">
               <p className="font-heading font-bold text-ink mb-3">Skin Tone</p>
               <div className="flex flex-wrap gap-3">
-                {Object.entries(SKIN_TONES).map(([key, { name, color }]) => (
+                {Object.entries(SKIN_TONES).map(([key, { name, hex }]) => (
                   <button
                     key={key}
-                    onClick={() => handleAppearance('skin', key)}
+                    onClick={() => handleAppearance('skinColor', key)}
                     title={name}
                     className={`w-10 h-10 rounded-full border-4 active:scale-90 transition-transform ${
-                      (equipped.skin ?? 'light') === key
+                      (equipped.skinColor ?? 'edb98a') === key
                         ? 'border-gold shadow-md scale-110'
                         : 'border-white/60 shadow-sm'
                     }`}
-                    style={{ backgroundColor: color }}
+                    style={{ backgroundColor: hex }}
                   />
                 ))}
               </div>
@@ -217,38 +208,81 @@ export default function StorePage() {
             <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm">
               <p className="font-heading font-bold text-ink mb-3">Hair Color</p>
               <div className="flex flex-wrap gap-3">
-                {Object.entries(HAIR_COLORS).map(([key, { name, color }]) => (
+                {Object.entries(HAIR_COLORS).map(([key, { name, hex }]) => (
                   <button
                     key={key}
-                    onClick={() => handleAppearance('hair', key)}
+                    onClick={() => handleAppearance('hairColor', key)}
                     title={name}
                     className={`w-10 h-10 rounded-full border-4 active:scale-90 transition-transform ${
-                      (equipped.hair ?? 'dark_brown') === key
+                      (equipped.hairColor ?? '4a312c') === key
                         ? 'border-gold shadow-md scale-110'
                         : 'border-white/60 shadow-sm'
                     }`}
-                    style={{ backgroundColor: color }}
+                    style={{ backgroundColor: hex }}
                   />
                 ))}
               </div>
             </div>
 
-            {/* Eye color */}
+            {/* Eyes */}
             <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm">
-              <p className="font-heading font-bold text-ink mb-3">Eye Color</p>
-              <div className="flex flex-wrap gap-3">
-                {Object.entries(EYE_COLORS).map(([key, { name, color }]) => (
+              <p className="font-heading font-bold text-ink mb-3">Eye Style</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(EYE_STYLES).map(([key, { name, emoji }]) => (
                   <button
                     key={key}
                     onClick={() => handleAppearance('eyes', key)}
                     title={name}
-                    className={`w-10 h-10 rounded-full border-4 active:scale-90 transition-transform ${
-                      (equipped.eyes ?? 'brown') === key
-                        ? 'border-gold shadow-md scale-110'
-                        : 'border-white/60 shadow-sm'
+                    className={`px-3 py-2 rounded-2xl font-heading text-sm active:scale-90 transition-transform border ${
+                      (equipped.eyes ?? 'default') === key
+                        ? 'bg-gold text-white border-gold'
+                        : 'bg-white border-gold/20 text-ink'
                     }`}
-                    style={{ backgroundColor: color }}
-                  />
+                  >
+                    {emoji} {name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Eyebrows */}
+            <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm">
+              <p className="font-heading font-bold text-ink mb-3">Eyebrows</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(EYEBROW_STYLES).map(([key, { name, emoji }]) => (
+                  <button
+                    key={key}
+                    onClick={() => handleAppearance('eyebrows', key)}
+                    title={name}
+                    className={`px-3 py-2 rounded-2xl font-heading text-sm active:scale-90 transition-transform border ${
+                      (equipped.eyebrows ?? 'defaultNatural') === key
+                        ? 'bg-gold text-white border-gold'
+                        : 'bg-white border-gold/20 text-ink'
+                    }`}
+                  >
+                    {emoji} {name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mouth */}
+            <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm">
+              <p className="font-heading font-bold text-ink mb-3">Mouth</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(MOUTH_STYLES).map(([key, { name, emoji }]) => (
+                  <button
+                    key={key}
+                    onClick={() => handleAppearance('mouth', key)}
+                    title={name}
+                    className={`px-3 py-2 rounded-2xl font-heading text-sm active:scale-90 transition-transform border ${
+                      (equipped.mouth ?? 'smile') === key
+                        ? 'bg-gold text-white border-gold'
+                        : 'bg-white border-gold/20 text-ink'
+                    }`}
+                  >
+                    {emoji} {name}
+                  </button>
                 ))}
               </div>
             </div>

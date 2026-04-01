@@ -1,39 +1,52 @@
-export const SKIN_TONES: Record<string, { name: string; color: string }> = {
-  fair:   { name: 'Fair',       color: '#FDDBB4' },
-  light:  { name: 'Light',      color: '#EEB98A' },
-  medium: { name: 'Medium',     color: '#D08B5B' },
-  tan:    { name: 'Tan',        color: '#AE6836' },
-  dark:   { name: 'Dark',       color: '#7B4020' },
-  deep:   { name: 'Deep',       color: '#4A2210' },
+// DiceBear avataaars option mappings
+// skinColor and hairColor use 6-digit hex (no #)
+
+export const SKIN_TONES: Record<string, { name: string; hex: string }> = {
+  ffdbb4: { name: 'Pale',       hex: '#ffdbb4' },
+  edb98a: { name: 'Light',      hex: '#edb98a' },
+  fd9841: { name: 'Tanned',     hex: '#fd9841' },
+  d08b5b: { name: 'Brown',      hex: '#d08b5b' },
+  ae5d29: { name: 'Dark Brown', hex: '#ae5d29' },
+  '614335': { name: 'Deep',     hex: '#614335' },
 }
 
-export const HAIR_COLORS: Record<string, { name: string; color: string }> = {
-  black:       { name: 'Black',       color: '#1A0800' },
-  dark_brown:  { name: 'Dark Brown',  color: '#3C1808' },
-  brown:       { name: 'Brown',       color: '#6B3520' },
-  auburn:      { name: 'Auburn',      color: '#8B3103' },
-  light_brown: { name: 'Light Brown', color: '#A07050' },
-  blonde:      { name: 'Blonde',      color: '#D4A827' },
-  red:         { name: 'Red',         color: '#AA2200' },
-  grey:        { name: 'Grey',        color: '#909090' },
+export const HAIR_COLORS: Record<string, { name: string; hex: string }> = {
+  '2c1b18': { name: 'Black',    hex: '#2c1b18' },
+  '4a312c': { name: 'Dark Brown', hex: '#4a312c' },
+  '724133': { name: 'Brown',    hex: '#724133' },
+  a55728:   { name: 'Auburn',   hex: '#a55728' },
+  b58143:   { name: 'Blonde',   hex: '#b58143' },
+  d6b370:   { name: 'Golden',   hex: '#d6b370' },
+  c93305:   { name: 'Red',      hex: '#c93305' },
+  f59797:   { name: 'Pink',     hex: '#f59797' },
+  ecdcbf:   { name: 'Platinum', hex: '#ecdcbf' },
+  e8e1e1:   { name: 'Silver',   hex: '#e8e1e1' },
 }
 
-export const EYE_COLORS: Record<string, { name: string; color: string }> = {
-  dark_brown: { name: 'Dark Brown', color: '#3E1F00' },
-  brown:      { name: 'Brown',      color: '#7B4A2E' },
-  hazel:      { name: 'Hazel',      color: '#8B7040' },
-  green:      { name: 'Green',      color: '#2E7D32' },
-  blue:       { name: 'Blue',       color: '#1565C0' },
-  grey:       { name: 'Grey',       color: '#607D8B' },
+export const EYE_STYLES: Record<string, { name: string; emoji: string }> = {
+  default:   { name: 'Default',   emoji: '😊' },
+  happy:     { name: 'Happy',     emoji: '😄' },
+  wink:      { name: 'Wink',      emoji: '😉' },
+  hearts:    { name: 'Hearts',    emoji: '😍' },
+  side:      { name: 'Side-eye',  emoji: '😏' },
+  squint:    { name: 'Squint',    emoji: '😤' },
+  surprised: { name: 'Surprised', emoji: '😮' },
+  closed:    { name: 'Closed',    emoji: '😌' },
 }
 
-// Body and leg colors for each costume ID
-export const COSTUME_BODY: Record<string, { body: string; legs: string }> = {
-  default:    { body: '#90CAF9', legs: '#3F51B5' },
-  bunny:      { body: '#F8BBD9', legs: '#F48FB1' },
-  fairy:      { body: '#CE93D8', legs: '#AB47BC' },
-  astronaut:  { body: '#ECEFF1', legs: '#90A4AE' },
-  wizard:     { body: '#7B1FA2', legs: '#4A148C' },
-  unicorn:    { body: '#F5F5F5', legs: '#E0E0E0' },
-  dragon:     { body: '#2E7D32', legs: '#1B5E20' },
+export const EYEBROW_STYLES: Record<string, { name: string; emoji: string }> = {
+  defaultNatural:      { name: 'Natural',   emoji: '🙂' },
+  raisedExcitedNatural:{ name: 'Raised',    emoji: '😲' },
+  angryNatural:        { name: 'Fierce',    emoji: '😤' },
+  sadConcernedNatural: { name: 'Gentle',    emoji: '🥺' },
+  upDownNatural:       { name: 'Expressive',emoji: '🤔' },
+}
+
+export const MOUTH_STYLES: Record<string, { name: string; emoji: string }> = {
+  smile:   { name: 'Smile',   emoji: '😊' },
+  twinkle: { name: 'Twinkle', emoji: '🙂' },
+  tongue:  { name: 'Tongue',  emoji: '😛' },
+  default: { name: 'Neutral', emoji: '😐' },
+  serious: { name: 'Serious', emoji: '😑' },
+  eating:  { name: 'Eating',  emoji: '😋' },
 }
