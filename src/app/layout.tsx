@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Baloo_2, Lora } from 'next/font/google'
 import './globals.css'
+import PinGate from '@/components/PinGate'
 
 const baloo2 = Baloo_2({
   variable: '--font-baloo2',
@@ -36,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${baloo2.variable} ${lora.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-parchment text-ink antialiased">
-        {children}
+        <PinGate>{children}</PinGate>
       </body>
     </html>
   )
