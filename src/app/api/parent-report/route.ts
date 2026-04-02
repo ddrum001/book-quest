@@ -11,8 +11,5 @@ export async function GET() {
     supabase.from('sessions').select('id, user_id, theme, stars_earned, stumble_words, reading_seconds, completed_at').order('completed_at', { ascending: false }),
   ])
 
-  if (usersError) console.error('[parent-report] users error:', usersError)
-  if (sessionsError) console.error('[parent-report] sessions error:', sessionsError)
-
-  return Response.json({ users: users ?? [], sessions: sessions ?? [], _errors: { users: usersError, sessions: sessionsError } })
+  return Response.json({ users: users ?? [], sessions: sessions ?? [] })
 }

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getLevel, type User } from '@/lib/types'
 
-const PIN = '2653'
 
 interface Session {
   id: string
@@ -73,9 +72,15 @@ export default function ParentPage() {
       })
   }, [authed])
 
-  function handlePin(e: React.FormEvent) {
+  async function handlePin(e: React.FormEvent) {
     e.preventDefault()
-    if (pin === PIN) {
+    const res = await fetch('/api/parent-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+    })
+    const { ok } = await res.json()
+    if (ok) {
       sessionStorage.setItem('parent_authed', '1')
       setAuthed(true)
       setPinError(false)
