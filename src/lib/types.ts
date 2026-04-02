@@ -100,6 +100,7 @@ export type ThemeId =
   | 'star-explorer'
   | 'enchanted-forest'
   | 'pirate-seas'
+  | 'zombies-seabrook'
 
 export interface ThemeConfig {
   id: ThemeId
@@ -150,6 +151,14 @@ export const THEMES: ThemeConfig[] = [
     color: '#D35400',
     bg: '#FFF8EE',
     description: 'Set sail for treasure on the high seas!',
+  },
+  {
+    id: 'zombies-seabrook',
+    name: 'Seabrook High',
+    emoji: '🧟',
+    color: '#C0227A',
+    bg: '#FFF0F8',
+    description: 'Join Erin at Seabrook High with Zed, Addison, and the whole crew!',
   },
 ]
 

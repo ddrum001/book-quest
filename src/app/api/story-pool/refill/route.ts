@@ -9,21 +9,62 @@ const MIN_POOL_SIZE = 3
 const client = new Anthropic()
 
 const THEME_NAMES: Record<string, string> = {
-  'dragon-kingdom': 'Dragon Kingdom',
-  'ocean-depths': 'Ocean Depths',
-  'star-explorer': 'Star Explorer',
+  'dragon-kingdom':   'Dragon Kingdom',
+  'ocean-depths':     'Ocean Depths',
+  'star-explorer':    'Star Explorer',
   'enchanted-forest': 'Enchanted Forest',
-  'pirate-seas': 'Pirate Seas',
+  'pirate-seas':      'Pirate Seas',
+  'zombies-seabrook': 'Seabrook High',
 }
 
-async function generateStory(themeName: string) {
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1024,
-    messages: [
-      {
-        role: 'user',
-        content: `Write a short children's story for a 3rd-grade reader (Lexile 580–650L) set in the "${themeName}" world.
+const JSON_SCHEMA = `Return ONLY valid JSON, no markdown fences, no extra text:
+{
+  "title": "Story title",
+  "story": "Full story text...",
+  "imagePrompt": "colorful children's book illustration of [key scene from the story], bright colors, no text",
+  "vocab": [
+    {"word": "word1", "hint": "simple child-friendly definition"},
+    {"word": "word2", "hint": "simple child-friendly definition"},
+    {"word": "word3", "hint": "simple child-friendly definition"}
+  ]
+}`
+
+const SHARED_RULES = `Rules:
+- 180–200 words total
+- Lexile level 520–570L (comfortable 3rd-grade reading level — short sentences, common words)
+- Engaging plot with a clear beginning, middle, and end
+- Include exactly 3 vocabulary spotlight words that are mildly challenging (strong 3rd-grade level); use each naturally in the story
+- Break the story into 3–4 short paragraphs (2–4 sentences each) separated by a blank line — no wall of text
+- No chapter titles or section headers
+- Keep the tone fun, a little adventurous, and never condescending
+- IMPORTANT: After introducing a character by name once, use pronouns (she/her/he/his/they) for the rest of the story — avoid repeating names like "Erin", "Trixie", or "Sebastian" since voice recognition struggles with proper nouns`
+
+function buildPrompt(theme: string, themeName: string): string {
+  if (theme === 'zombies-seabrook') {
+    return `Write a short children's fan-fiction story set at Seabrook High School, the school from Disney's "Zombies" movies. This is personal fan fiction written just for Erin and is not for any commercial use.
+
+Erin is a student at Seabrook High. She:
+- Is a regular human who loves engineering and building things (especially Minecraft-style contraptions)
+- Has a fluffy white pet bunny named Trixie who sometimes sneaks onto campus in her backpack
+- Prefers hanging out with the monster students because she finds them way more interesting than the "normies"
+- Has a 4-year-old brother named Sebastian who occasionally shows up unexpectedly
+- Is quirky and confident, not a follower
+
+Pick a few of these Seabrook characters to appear alongside Erin — don't use them all:
+- Zed Necrodopolis — zombie, football player, enthusiastic and kind
+- Addison Wells — human cheerleader, brave, natural leader, has mysterious white hair
+- Willa Lykensen — werewolf, fierce, loyal, protective of her pack
+- Wyatt Lykensen — werewolf, quiet and thoughtful
+- Nova Bright — vampire, stylish, mysterious, surprisingly funny
+
+${SHARED_RULES}
+- Celebrate the Seabrook theme of friendship across differences — monsters and humans stronger together
+- The imagePrompt should describe a colorful, energetic school scene with pink and green school colors, cartoon style, no text
+
+${JSON_SCHEMA}`
+  }
+
+  return `Write a short children's story for a 3rd-grade reader set in the "${themeName}" world.
 
 The story is for Erin, an 8-year-old girl with a big personality. Use this profile to make the story feel personal and specific to her — don't use all of it, just pick what fits naturally:
 
@@ -36,29 +77,18 @@ About Erin:
 - Lives in Northern California with a big family; cousins named Cillian, Savannah, and Landon sometimes appear
 - The story's hero should be a girl (Erin herself, or a character like her)
 
-Rules:
-- 180–200 words total
-- Lexile level 520–570L (comfortable 3rd-grade reading level — short sentences, common words)
-- Engaging plot with a clear beginning, middle, and end
-- Include exactly 3 vocabulary spotlight words that are mildly challenging (strong 3rd-grade level); use each naturally in the story
-- Break the story into 3–4 short paragraphs (2–4 sentences each) separated by a blank line — no wall of text
-- No chapter titles or section headers
-- Keep the tone fun, a little adventurous, and never condescending
-- IMPORTANT: After introducing a character by name once, use pronouns (she/her/he/his/they) for the rest of the story — avoid repeating names like "Erin", "Trixie", or "Sebastian" since voice recognition struggles with proper nouns
+${SHARED_RULES}
+- The imagePrompt should describe a colorful children's book illustration in a soft watercolor style, whimsical, bright colors, no text
 
-Return ONLY valid JSON, no markdown fences, no extra text:
-{
-  "title": "Story title",
-  "story": "Full story text...",
-  "imagePrompt": "colorful children's book illustration of [key scene from the story], soft watercolor style, whimsical, bright colors, no text",
-  "vocab": [
-    {"word": "word1", "hint": "simple child-friendly definition"},
-    {"word": "word2", "hint": "simple child-friendly definition"},
-    {"word": "word3", "hint": "simple child-friendly definition"}
-  ]
-}`,
-      },
-    ],
+${JSON_SCHEMA}`
+}
+
+async function generateStory(theme: string) {
+  const themeName = THEME_NAMES[theme] ?? 'Dragon Kingdom'
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: buildPrompt(theme, themeName) }],
   })
 
   const raw = message.content[0].type === 'text' ? message.content[0].text.trim() : ''
@@ -73,7 +103,6 @@ Return ONLY valid JSON, no markdown fences, no extra text:
 
 export async function POST(request: NextRequest) {
   const { theme } = await request.json()
-  const themeName = THEME_NAMES[theme] ?? 'Dragon Kingdom'
 
   const supabase = await createClient()
 
@@ -88,7 +117,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Generate a new story
-  const storyData = await generateStory(themeName)
+  const storyData = await generateStory(theme)
 
   // Insert into story_pool
   await (supabase as any)

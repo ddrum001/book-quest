@@ -13,6 +13,7 @@ const ALL_THEMES = [
   'star-explorer',
   'enchanted-forest',
   'pirate-seas',
+  'zombies-seabrook',
 ]
 
 const STREAK_BADGES: Array<{ days: number; id: BadgeId }> = [
