@@ -14,5 +14,5 @@ export async function GET() {
   if (usersError) console.error('[parent-report] users error:', usersError)
   if (sessionsError) console.error('[parent-report] sessions error:', sessionsError)
 
-  return Response.json({ users: users ?? [], sessions: sessions ?? [] })
+  return Response.json({ users: users ?? [], sessions: sessions ?? [], _errors: { users: usersError, sessions: sessionsError } })
 }
