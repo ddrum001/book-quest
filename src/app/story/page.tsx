@@ -191,12 +191,18 @@ function StoryScreen() {
 
   // ── Fetch story ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch(`/api/story?theme=${themeId}`)
+    const userId = localStorage.getItem('bookquest_user_id')
+    fetch(`/api/story?theme=${themeId}&userId=${userId ?? ''}`)
       .then(r => r.json())
       .then(data => {
         if (data.error) throw new Error(data.error)
         setStory(data as StoryData)
         setPhase('ready')
+        fetch('/api/story-pool/refill', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: themeId }),
+        }).catch(() => {})
       })
       .catch(() => setFetchError("Couldn't load the story. Please go back and try again."))
   }, [themeId])

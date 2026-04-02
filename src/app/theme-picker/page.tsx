@@ -1,10 +1,25 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { THEMES } from '@/lib/types'
 
 export default function ThemePickerPage() {
   const router = useRouter()
+
+  useEffect(() => {
+    const userId = localStorage.getItem('bookquest_user_id')
+    Promise.allSettled(
+      THEMES.map(theme =>
+        fetch('/api/story-pool/refill', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: theme.id }),
+        })
+      )
+    )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="flex flex-col bg-parchment min-h-screen">

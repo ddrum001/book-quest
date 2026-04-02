@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 
 export const maxDuration = 60
 
+const MIN_POOL_SIZE = 3
+
 const client = new Anthropic()
 
 const THEME_NAMES: Record<string, string> = {
@@ -69,75 +71,33 @@ Return ONLY valid JSON, no markdown fences, no extra text:
   }
 }
 
-export async function GET(request: NextRequest) {
-  const theme = request.nextUrl.searchParams.get('theme') ?? 'dragon-kingdom'
-  const userId = request.nextUrl.searchParams.get('userId') ?? ''
+export async function POST(request: NextRequest) {
+  const { theme } = await request.json()
   const themeName = THEME_NAMES[theme] ?? 'Dragon Kingdom'
 
   const supabase = await createClient()
 
-  // Find stories this user has already read for this theme
-  let readIds: string[] = []
-  if (userId) {
-    const { data: reads } = await (supabase as any)
-      .from('story_reads')
-      .select('story_id')
-      .eq('user_id', userId)
-
-    if (reads && reads.length > 0) {
-      readIds = reads.map((r: any) => r.story_id)
-    }
-  }
-
-  // Look for an unread pooled story for this theme
-  let query = (supabase as any)
+  // Check current pool size for this theme
+  const { count } = await (supabase as any)
     .from('story_pool')
-    .select('*')
+    .select('*', { count: 'exact', head: true })
     .eq('theme_id', theme)
-    .order('created_at', { ascending: true })
-    .limit(1)
 
-  if (readIds.length > 0) {
-    query = query.not('id', 'in', `(${readIds.join(',')})`)
+  if ((count ?? 0) >= MIN_POOL_SIZE) {
+    return Response.json({ ok: true, skipped: true })
   }
 
-  const { data: poolEntries } = await query
-  const poolEntry = poolEntries?.[0] ?? null
+  // Generate a new story
+  const storyData = await generateStory(themeName)
 
-  if (poolEntry) {
-    // Mark as read
-    if (userId) {
-      await (supabase as any)
-        .from('story_reads')
-        .upsert({ user_id: userId, story_id: poolEntry.id }, { onConflict: 'user_id,story_id' })
-    }
+  // Insert into story_pool
+  await (supabase as any)
+    .from('story_pool')
+    .insert({ theme_id: theme, story_data: storyData })
 
-    const storyData = poolEntry.story_data as any
-    return Response.json({ ...storyData, poolId: poolEntry.id, fromPool: true })
-  }
+  // Pre-warm the image by fetching it (fire-and-forget, errors silently swallowed)
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(storyData.imagePrompt)}?width=800&height=380&nologo=true`
+  await fetch(imageUrl, { signal: AbortSignal.timeout(50_000) }).catch(() => {})
 
-  // Nothing in pool — generate fresh
-  try {
-    const storyData = await generateStory(themeName)
-
-    // Store in story_pool
-    const { data: inserted } = await (supabase as any)
-      .from('story_pool')
-      .insert({ theme_id: theme, story_data: storyData })
-      .select('id')
-      .single()
-
-    const poolId = inserted?.id ?? null
-
-    // Mark as read
-    if (userId && poolId) {
-      await (supabase as any)
-        .from('story_reads')
-        .upsert({ user_id: userId, story_id: poolId }, { onConflict: 'user_id,story_id' })
-    }
-
-    return Response.json({ ...storyData, poolId, fromPool: false })
-  } catch {
-    return Response.json({ error: 'Failed to parse story response' }, { status: 500 })
-  }
+  return Response.json({ ok: true, skipped: false })
 }
