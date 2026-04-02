@@ -25,6 +25,7 @@ export default function StorePage() {
   const [tab, setTab] = useState<Tab>('top')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   // Keep ref in sync so event handlers always read the latest equipped state
   equippedRef.current = equipped
@@ -54,8 +55,21 @@ export default function StorePage() {
     equippedRef.current = next
     setEquipped(next)
     setUser(prev => prev ? { ...prev, avatar_equipped: next } : prev)
+    setSaveStatus('saving')
     const supabase = createClient()
-    await supabase.from('users').update({ avatar_equipped: next }).eq('id', uid)
+    const { error } = await supabase
+      .from('users')
+      .update({ avatar_equipped: next })
+      .eq('id', uid)
+      .select('id')
+      .single()
+    if (error) {
+      setSaveStatus('error')
+      console.error('[Avatar save]', error)
+    } else {
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 2000)
+    }
   }
 
   async function handleAppearance(key: string, value: string) {
@@ -115,8 +129,16 @@ export default function StorePage() {
       </header>
 
       {/* Avatar preview */}
-      <div className="shrink-0 flex justify-center py-3">
+      <div className="shrink-0 flex flex-col items-center py-3 gap-1">
         <Avatar equipped={equipped} variant="full" size={120} />
+        <p className={`text-xs font-heading transition-opacity duration-300 ${
+          saveStatus === 'idle' ? 'opacity-0' :
+          saveStatus === 'saving' ? 'opacity-100 text-ink-light' :
+          saveStatus === 'saved' ? 'opacity-100 text-green-500' :
+          'opacity-100 text-red-500'
+        }`}>
+          {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? '⚠ Save failed' : '✓ Saved'}
+        </p>
       </div>
 
       {/* Tabs */}
