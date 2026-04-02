@@ -147,7 +147,7 @@ function StoryScreen() {
   const [showHint, setShowHint] = useState(false)
   const [speechEnabled, setSpeechEnabled] = useState(false)
   const [showSkipConfirm, setShowSkipConfirm] = useState(false)
-  const claimingRef = useRef(false)
+  const [claiming, setClaiming] = useState(false)
 
   // Stable refs for use inside callbacks
   const currentWordIndexRef = useRef(0)
@@ -382,8 +382,8 @@ function StoryScreen() {
     const skippedList = Array.from(skippedWords)
 
     async function handleClaimRewards() {
-      if (claimingRef.current) return
-      claimingRef.current = true
+      if (claiming) return
+      setClaiming(true)
       const userId = localStorage.getItem('bookquest_user_id')
       if (!userId) { router.push('/'); return }
 
@@ -457,7 +457,7 @@ function StoryScreen() {
 
           <button
             onClick={handleClaimRewards}
-            disabled={claimingRef.current}
+            disabled={claiming}
             className="w-full max-w-xs text-white font-heading font-bold text-xl py-5 rounded-3xl shadow-lg active:scale-95 transition-transform disabled:opacity-60"
             style={{ backgroundColor: theme.color }}
           >
