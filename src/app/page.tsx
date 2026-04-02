@@ -49,6 +49,7 @@ export default function HomePage() {
   const [nameInput, setNameInput] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
+  const [isNewUser, setIsNewUser] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -101,7 +102,7 @@ export default function HomePage() {
 
     const { data, error: dbError } = await supabase
       .from('users')
-      .insert({ child_name: nameInput.trim() })
+      .insert({ child_name: nameInput.trim(), coins: 100 })
       .select()
       .single()
     if (dbError) {
@@ -113,6 +114,7 @@ export default function HomePage() {
     localStorage.setItem('bookquest_user_id', newUser.id)
     setAllUsers(prev => [...prev, newUser].sort((a, b) => a.child_name.localeCompare(b.child_name)))
     setUser(newUser)
+    setIsNewUser(true)
     setCreating(false)
   }
 
@@ -237,6 +239,18 @@ export default function HomePage() {
           <span className="font-heading font-bold text-gold">{user.coins ?? 0}</span>
         </div>
       </header>
+
+      {/* Welcome banner for new readers */}
+      {isNewUser && (
+        <div className="mx-6 mb-3 bg-gold/10 border border-gold/30 rounded-3xl px-5 py-4 flex items-start gap-3">
+          <span className="text-2xl shrink-0">🪙</span>
+          <div className="flex-1">
+            <p className="font-heading font-bold text-ink">Welcome! You have 100 coins!</p>
+            <p className="font-body text-sm text-ink-light mt-0.5">Read stories to earn even more — finish one perfectly for a bonus!</p>
+          </div>
+          <button onClick={() => setIsNewUser(false)} className="text-ink-muted font-heading text-lg leading-none shrink-0">×</button>
+        </div>
+      )}
 
       {/* XP progress bar */}
       <div className="px-6 mb-6">

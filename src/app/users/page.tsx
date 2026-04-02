@@ -55,7 +55,7 @@ export default function UsersPage() {
 
     const { data, error: dbError } = await supabase
       .from('users')
-      .insert({ child_name: nameInput.trim() })
+      .insert({ child_name: nameInput.trim(), coins: 100 })
       .select()
       .single()
     if (dbError) {
