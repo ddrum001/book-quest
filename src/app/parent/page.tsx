@@ -79,7 +79,8 @@ export default function ParentPage() {
       .select('id, theme, stars_earned, stumble_words, reading_seconds, created_at')
       .eq('user_id', selectedId)
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('[Parent portal] sessions query error:', error)
         setSessions((data ?? []) as Session[])
         setLoading(false)
       })
