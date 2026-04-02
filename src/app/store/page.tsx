@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { STORE_ITEMS, type StoreItem, type User } from '@/lib/types'
@@ -21,9 +21,13 @@ export default function StorePage() {
   const [user, setUser] = useState<User | null>(null)
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set())
   const [equipped, setEquipped] = useState<Record<string, string>>({})
+  const equippedRef = useRef<Record<string, string>>({})
   const [tab, setTab] = useState<Tab>('top')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
+
+  // Keep ref in sync so event handlers always read the latest equipped state
+  equippedRef.current = equipped
 
   const userId = typeof window !== 'undefined' ? localStorage.getItem('bookquest_user_id') : null
 
@@ -44,19 +48,24 @@ export default function StorePage() {
   useEffect(() => { load() }, [load])
 
   async function saveEquipped(next: Record<string, string>) {
+    // Read userId fresh — avoids stale closure when null during first render
+    const uid = localStorage.getItem('bookquest_user_id')
+    if (!uid) return
+    equippedRef.current = next
     setEquipped(next)
     setUser(prev => prev ? { ...prev, avatar_equipped: next } : prev)
     const supabase = createClient()
-    await supabase.from('users').update({ avatar_equipped: next }).eq('id', userId!)
+    await supabase.from('users').update({ avatar_equipped: next }).eq('id', uid)
   }
 
   async function handleAppearance(key: string, value: string) {
-    await saveEquipped({ ...equipped, [key]: value })
+    // Use ref so rapid taps always build on the latest state
+    await saveEquipped({ ...equippedRef.current, [key]: value })
   }
 
   async function handleEquip(item: StoreItem) {
-    const isEquipped = equipped[item.category] === item.id
-    const next = { ...equipped }
+    const isEquipped = equippedRef.current[item.category] === item.id
+    const next = { ...equippedRef.current }
     if (isEquipped) delete next[item.category]
     else next[item.category] = item.id
     await saveEquipped(next)
@@ -74,7 +83,7 @@ export default function StorePage() {
     setUser(prev => prev ? { ...prev, coins: prev.coins - item.cost } : prev)
     setOwnedIds(prev => new Set([...prev, item.id]))
     // Auto-equip on purchase
-    const next = { ...equipped, [item.category]: item.id }
+    const next = { ...equippedRef.current, [item.category]: item.id }
     await saveEquipped(next)
     setBusy(null)
   }
@@ -195,7 +204,7 @@ export default function StorePage() {
                 ].map(preset => (
                   <button
                     key={preset.label}
-                    onClick={() => saveEquipped({ ...equipped, top: preset.top, clothing: preset.clothing, clothesColor: preset.clothesColor })}
+                    onClick={() => saveEquipped({ ...equippedRef.current, top: preset.top, clothing: preset.clothing, clothesColor: preset.clothesColor })}
                     className="flex-1 py-3 rounded-2xl font-heading font-semibold text-sm border border-gold/20 bg-parchment text-ink active:scale-95 transition-transform"
                   >
                     {preset.label}
