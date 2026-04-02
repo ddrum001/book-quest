@@ -148,6 +148,9 @@ function StoryScreen() {
   const [speechEnabled, setSpeechEnabled] = useState(false)
   const [showSkipConfirm, setShowSkipConfirm] = useState(false)
   const [claiming, setClaiming] = useState(false)
+  // Synchronous guard — ref updates are immediate unlike setState, so rapid taps
+  // all see the true value set by the first tap before any re-render occurs
+  const claimingRef = useRef(false)
   // Stable idempotency key for this session — same key every re-render,
   // so even if handleClaimRewards fires twice the DB upsert only creates one row
   const sessionKeyRef = useRef(crypto.randomUUID())
@@ -385,7 +388,8 @@ function StoryScreen() {
     const skippedList = Array.from(skippedWords)
 
     async function handleClaimRewards() {
-      if (claiming) return
+      if (claimingRef.current) return
+      claimingRef.current = true
       setClaiming(true)
       const userId = localStorage.getItem('bookquest_user_id')
       if (!userId) { router.push('/'); return }
