@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { getLevel, type User } from '@/lib/types'
 
 const PIN = '2653'
@@ -48,7 +47,7 @@ export default function ParentPage() {
 
   const [users, setUsers] = useState<User[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [sessions, setSessions] = useState<Session[]>([])
+  const [allSessions, setAllSessions] = useState<(Session & { user_id: string })[]>([])
   const [loading, setLoading] = useState(false)
 
   // Check sessionStorage for prior auth
@@ -56,35 +55,23 @@ export default function ParentPage() {
     if (sessionStorage.getItem('parent_authed') === '1') setAuthed(true)
   }, [])
 
-  // Load all users once authed
+  // Load all data once authed via server route (bypasses RLS)
   useEffect(() => {
     if (!authed) return
-    createClient()
-      .from('users')
-      .select('*')
-      .order('child_name')
-      .then(({ data }) => {
-        const u = (data ?? []) as User[]
+    setLoading(true)
+    fetch('/api/parent-report')
+      .then(r => r.json())
+      .then(({ users: u, sessions: s }) => {
         setUsers(u)
         if (u.length > 0) setSelectedId(u[0].id)
-      })
-  }, [authed])
-
-  // Load sessions for selected user
-  useEffect(() => {
-    if (!selectedId) return
-    setLoading(true)
-    createClient()
-      .from('sessions')
-      .select('id, theme, stars_earned, stumble_words, reading_seconds, created_at')
-      .eq('user_id', selectedId)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) console.error('[Parent portal] sessions query error:', error)
-        setSessions((data ?? []) as Session[])
+        setAllSessions(s)
         setLoading(false)
       })
-  }, [selectedId])
+      .catch(err => {
+        console.error('[Parent portal] fetch error:', err)
+        setLoading(false)
+      })
+  }, [authed])
 
   function handlePin(e: React.FormEvent) {
     e.preventDefault()
@@ -140,6 +127,7 @@ export default function ParentPage() {
 
   // ── Dashboard ─────────────────────────────────────────────────────────────────
   const selectedUser = users.find(u => u.id === selectedId) ?? null
+  const sessions = allSessions.filter(s => s.user_id === selectedId)
 
   // Last 7 days reading time
   const last7 = getLast7Days()
