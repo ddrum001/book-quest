@@ -12,7 +12,7 @@ interface Session {
   stars_earned: number | null
   stumble_words: string[] | null
   reading_seconds: number | null
-  created_at: string
+  completed_at: string
 }
 
 function toPtDate(date: Date): string {
@@ -135,7 +135,7 @@ export default function ParentPage() {
   const storiesByDay: Record<string, number> = {}
   for (const day of last7) { secondsByDay[day] = 0; storiesByDay[day] = 0 }
   for (const s of sessions) {
-    const day = toPtDate(new Date(s.created_at))
+    const day = toPtDate(new Date(s.completed_at))
     if (secondsByDay[day] !== undefined) {
       secondsByDay[day] += s.reading_seconds ?? 0
       storiesByDay[day] += 1
@@ -334,7 +334,7 @@ export default function ParentPage() {
                         <div className="shrink-0 text-right">
                           <p className="text-sm">{'⭐'.repeat(stars)}{'☆'.repeat(3 - stars)}</p>
                           <p className="text-[10px] font-heading text-ink-muted">
-                            {new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            {new Date(s.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </p>
                         </div>
                       </div>

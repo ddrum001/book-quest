@@ -31,8 +31,8 @@ async function fetchTodaySeconds(userId: string): Promise<number> {
     .from('sessions')
     .select('reading_seconds')
     .eq('user_id', userId)
-    .gte('created_at', start.toISOString())
-    .lt('created_at', end.toISOString())
+    .gte('completed_at', start.toISOString())
+    .lt('completed_at', end.toISOString())
   return (data ?? []).reduce(
     (sum: number, s: { reading_seconds: number | null }) => sum + (s.reading_seconds ?? 0), 0
   )

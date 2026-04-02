@@ -77,9 +77,9 @@ export async function POST(request: Request) {
   // ── Fetch previous sessions (used for streak + theme checks) ─────────────────
   const { data: prevSessions } = await supabase
     .from('sessions')
-    .select('theme, created_at')
+    .select('theme, completed_at')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false })
+    .order('completed_at', { ascending: false })
 
   // ── Streak computation ────────────────────────────────────────────────────────
   const todayPt = toPtDate(new Date())
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
 
   // Unique PT dates from all previous sessions
   const prevPtDates = new Set(
-    (prevSessions ?? []).map(s => toPtDate(new Date(s.created_at)))
+    (prevSessions ?? []).map(s => toPtDate(new Date(s.completed_at)))
   )
 
   let newStreak: number
@@ -181,8 +181,8 @@ export async function POST(request: Request) {
     .from('sessions')
     .select('reading_seconds')
     .eq('user_id', userId)
-    .gte('created_at', gte)
-    .lt('created_at', lt)
+    .gte('completed_at', gte)
+    .lt('completed_at', lt)
 
   const todaySeconds = (todaySessions ?? []).reduce(
     (sum: number, s: { reading_seconds: number | null }) => sum + (s.reading_seconds ?? 0),
