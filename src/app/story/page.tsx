@@ -148,6 +148,9 @@ function StoryScreen() {
   const [speechEnabled, setSpeechEnabled] = useState(false)
   const [showSkipConfirm, setShowSkipConfirm] = useState(false)
   const [claiming, setClaiming] = useState(false)
+  // Stable idempotency key for this session — same key every re-render,
+  // so even if handleClaimRewards fires twice the DB upsert only creates one row
+  const sessionKeyRef = useRef(crypto.randomUUID())
 
   // Stable refs for use inside callbacks
   const currentWordIndexRef = useRef(0)
@@ -391,6 +394,7 @@ function StoryScreen() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          sessionId: sessionKeyRef.current,
           userId,
           theme: themeId,
           storyText: story?.story ?? '',

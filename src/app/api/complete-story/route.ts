@@ -58,7 +58,7 @@ function getPtTodayBounds(): { gte: string; lt: string } {
 }
 
 export async function POST(request: Request) {
-  const { userId, theme, storyText, stumbleWords, skippedWords, vocabWords, readingSeconds } =
+  const { sessionId, userId, theme, storyText, stumbleWords, skippedWords, vocabWords, readingSeconds } =
     await request.json()
 
   const supabase = await createClient()
@@ -118,7 +118,8 @@ export async function POST(request: Request) {
   const sessionSeconds = Math.max(0, Math.round(readingSeconds ?? 0))
 
   // ── Save session ──────────────────────────────────────────────────────────────
-  await supabase.from('sessions').insert({
+  const { error: sessionError } = await supabase.from('sessions').upsert({
+    ...(sessionId ? { id: sessionId } : {}),
     user_id: userId,
     theme,
     story_text: storyText ?? '',
@@ -127,7 +128,8 @@ export async function POST(request: Request) {
     vocab_words: vocabWords ?? [],
     stumble_words: allDifficult,
     reading_seconds: sessionSeconds,
-  })
+  }, { onConflict: 'id', ignoreDuplicates: true })
+  if (sessionError) console.error('[complete-story] session insert error:', sessionError)
 
   // ── Update user totals ────────────────────────────────────────────────────────
   await supabase
