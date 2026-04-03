@@ -35,13 +35,10 @@ export default function StorePage() {
   const load = useCallback(async () => {
     if (!userId) { router.push('/'); return }
     const supabase = createClient()
-    const [{ data: userData }, { data: itemData }] = await Promise.all([
-      supabase.from('users').select('*').eq('id', userId).single(),
-      supabase.from('user_items').select('item_id').eq('user_id', userId),
-    ])
+    const { data: userData } = await supabase.from('users').select('*').eq('id', userId).single()
     if (!userData) { router.push('/'); return }
     setUser(userData as User)
-    setOwnedIds(new Set((itemData ?? []).map((r: { item_id: string }) => r.item_id)))
+    setOwnedIds(new Set((userData as User).owned_items ?? []))
     setEquipped((userData as User).avatar_equipped ?? {})
     setLoading(false)
   }, [userId, router])
@@ -89,12 +86,13 @@ export default function StorePage() {
     if (!user || !userId || busy) return
     if ((user.coins ?? 0) < item.cost) return
     setBusy(item.id)
+    const newOwnedItems = [...(user.owned_items ?? []), item.id]
     const supabase = createClient()
-    await Promise.all([
-      supabase.from('users').update({ coins: user.coins - item.cost }).eq('id', userId),
-      supabase.from('user_items').insert({ user_id: userId, item_id: item.id }),
-    ])
-    setUser(prev => prev ? { ...prev, coins: prev.coins - item.cost } : prev)
+    await supabase
+      .from('users')
+      .update({ coins: user.coins - item.cost, owned_items: newOwnedItems })
+      .eq('id', userId)
+    setUser(prev => prev ? { ...prev, coins: prev.coins - item.cost, owned_items: newOwnedItems } : prev)
     setOwnedIds(prev => new Set([...prev, item.id]))
     // Auto-equip on purchase
     const next = { ...equippedRef.current, [item.category]: item.id }

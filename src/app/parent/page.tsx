@@ -11,7 +11,14 @@ interface Session {
   stars_earned: number | null
   stumble_words: string[] | null
   reading_seconds: number | null
+  story_text: string | null
   completed_at: string
+}
+
+function calcWpm(session: Session): number | null {
+  if (!session.story_text || !session.reading_seconds || session.reading_seconds < 15) return null
+  const words = session.story_text.split(/\s+/).filter(Boolean).length
+  return Math.round((words / session.reading_seconds) * 60)
 }
 
 function toPtDate(date: Date): string {
@@ -153,6 +160,12 @@ export default function ParentPage() {
   const total7Secs = last7.reduce((sum, d) => sum + secondsByDay[d], 0)
   const avg7Secs = Math.round(total7Secs / 7)
 
+  // Average WPM across all sessions with enough data
+  const wpmSessions = sessions.filter(s => calcWpm(s) !== null)
+  const avgWpm = wpmSessions.length > 0
+    ? Math.round(wpmSessions.reduce((sum, s) => sum + calcWpm(s)!, 0) / wpmSessions.length)
+    : null
+
   // Top stumble words
   const wordCounts: Record<string, number> = {}
   for (const s of sessions) {
@@ -211,7 +224,7 @@ export default function ParentPage() {
         ) : (
           <>
             {/* Summary cards */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-3xl p-4 border border-gold/20 shadow-sm text-center">
                 <p className="text-2xl font-heading font-bold text-gold">{selectedUser.stories_read}</p>
                 <p className="text-xs font-heading text-ink-light mt-0.5">Stories read</p>
@@ -223,6 +236,12 @@ export default function ParentPage() {
               <div className="bg-white rounded-3xl p-4 border border-gold/20 shadow-sm text-center">
                 <p className="text-2xl font-heading font-bold text-gold">Lv {getLevel(selectedUser.total_xp)}</p>
                 <p className="text-xs font-heading text-ink-light mt-0.5">Current level</p>
+              </div>
+              <div className="bg-white rounded-3xl p-4 border border-gold/20 shadow-sm text-center">
+                <p className="text-2xl font-heading font-bold text-gold">
+                  {avgWpm !== null ? avgWpm : '—'}
+                </p>
+                <p className="text-xs font-heading text-ink-light mt-0.5">Avg WPM</p>
               </div>
             </div>
 
@@ -342,6 +361,7 @@ export default function ParentPage() {
                           </p>
                           <p className="text-xs font-body text-ink-light">
                             {fmtTime(s.reading_seconds ?? 0)} · {(s.stumble_words ?? []).length} stumbles
+                            {calcWpm(s) !== null && ` · ${calcWpm(s)} wpm`}
                           </p>
                         </div>
                         <div className="shrink-0 text-right">

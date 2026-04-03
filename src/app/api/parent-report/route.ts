@@ -8,7 +8,7 @@ export async function GET() {
 
   const [{ data: users, error: usersError }, { data: sessions, error: sessionsError }] = await Promise.all([
     supabase.from('users').select('*').order('child_name'),
-    supabase.from('sessions').select('id, user_id, theme, stars_earned, stumble_words, reading_seconds, completed_at').order('completed_at', { ascending: false }),
+    supabase.from('sessions').select('id, user_id, theme, stars_earned, stumble_words, reading_seconds, story_text, completed_at').order('completed_at', { ascending: false }),
   ])
 
   return Response.json({ users: users ?? [], sessions: sessions ?? [] })
