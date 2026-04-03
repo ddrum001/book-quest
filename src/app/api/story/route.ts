@@ -28,13 +28,14 @@ const JSON_SCHEMA = `Return ONLY valid JSON, no markdown fences, no extra text:
 }`
 
 const SHARED_RULES = `Rules:
-- 180–200 words total
+- 120–140 words total — keep it SHORT and punchy, leave her wanting more
 - Lexile level 520–570L (comfortable 3rd-grade reading level — short sentences, common words)
-- Engaging plot with a clear beginning, middle, and end
+- Fast-paced plot with immediate action — open in the middle of something exciting, not with setup
+- End with a satisfying but curious moment that makes her smile and want the next one
 - Include exactly 3 vocabulary spotlight words that are mildly challenging (strong 3rd-grade level); use each naturally in the story
-- Break the story into 3–4 short paragraphs (2–4 sentences each) separated by a blank line — no wall of text
+- Break the story into 2–3 short paragraphs (2–3 sentences each) separated by a blank line — no wall of text
 - No chapter titles or section headers
-- Keep the tone fun, a little adventurous, and never condescending
+- Keep the tone fun, energetic, and a little surprising — aim for at least one moment that will make her laugh or gasp
 - IMPORTANT: After introducing a character by name once, use pronouns (she/her/he/his/they) for the rest of the story — avoid repeating names like "Erin", "Trixie", or "Sebastian" since voice recognition struggles with proper nouns`
 
 function buildPrompt(theme: string, themeName: string): string {

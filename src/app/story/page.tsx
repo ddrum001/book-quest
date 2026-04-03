@@ -103,11 +103,51 @@ function normalize(word: string): string {
   return HOMOPHONES[clean] ?? clean
 }
 
+// Levenshtein distance — fast, O(n) space
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0
+  if (a.length === 0) return b.length
+  if (b.length === 0) return a.length
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    let prev = row[0]++
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = row[j]
+      row[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, row[j], row[j - 1])
+      prev = tmp
+    }
+  }
+  return row[b.length]
+}
+
+// Lenient match: exact > homophone > prefix > fuzzy edit-distance.
+// Skip fuzzy for very short words to avoid false positives ("I" ≠ "in").
+function matches(spoken: string, target: string): boolean {
+  if (!spoken || !target) return false
+  if (spoken === target) return true
+  if (spoken.length <= 2 || target.length <= 2) return false
+  // Prefix: she said at least the first 4 chars of the target word correctly
+  // (covers mumbled/trailed-off endings: "beauti" for "beautiful")
+  if (target.length >= 5 && spoken.length >= 4 && target.startsWith(spoken.slice(0, 4))) return true
+  // Fuzzy: 1 edit for words up to 6 chars, 2 edits for longer
+  return levenshtein(spoken, target) <= (target.length <= 6 ? 1 : 2)
+}
+
 function tokenize(text: string): WordToken[] {
-  return text.split(/\s+/).filter(Boolean).map(text => ({
-    text,
-    clean: normalize(text),
-  }))
+  const tokens: WordToken[] = []
+  for (const chunk of text.split(/\s+/).filter(Boolean)) {
+    // Split mid-word hyphens ("well-known" → "well-" + "known") so each part
+    // is individually speakable. Standalone punctuation like — or - produces
+    // an empty clean and is skipped entirely.
+    const parts = chunk.split(/(?<=[a-zA-Z])-(?=[a-zA-Z])/)
+    parts.forEach((part, i) => {
+      // Re-attach hyphen as display suffix on all but the last part
+      const display = i < parts.length - 1 ? part + '-' : part
+      const clean = normalize(display)
+      if (clean) tokens.push({ text: display, clean })
+    })
+  }
+  return tokens
 }
 
 // Split story into paragraphs, each with its own word array + global offset
@@ -264,8 +304,10 @@ function StoryScreen() {
     if (idx >= words.length) return
 
     const norm = normalize(spoken)
-    const matchIdx = words[idx]?.clean === norm ? idx
-      : words[idx + 1]?.clean === norm ? idx + 1
+    const matchIdx =
+      matches(norm, words[idx]?.clean ?? '')     ? idx
+      : matches(norm, words[idx + 1]?.clean ?? '') ? idx + 1
+      : matches(norm, words[idx + 2]?.clean ?? '') ? idx + 2
       : -1
 
     if (matchIdx !== -1) {
