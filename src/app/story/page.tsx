@@ -394,6 +394,12 @@ function StoryScreen() {
       const userId = localStorage.getItem('bookquest_user_id')
       if (!userId) { router.push('/'); return }
 
+      // Store story data so the games page can generate hangman + quiz content
+      sessionStorage.setItem('bookquest_game_data', JSON.stringify({
+        storyText: story?.story ?? '',
+        vocab: story?.vocab ?? [],
+      }))
+
       const res = await fetch('/api/complete-story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -426,7 +432,7 @@ function StoryScreen() {
         streak: String(data.currentStreak ?? 0),
         coins: String(data.coinsGained ?? 0),
       })
-      router.push(`/reward?${params.toString()}`)
+      router.push(`/games?${params.toString()}`)
     }
 
     const allDifficult = [...new Set([...stumbleList, ...skippedList])]

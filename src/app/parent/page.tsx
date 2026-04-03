@@ -62,7 +62,10 @@ export default function ParentPage() {
       .then(r => r.json())
       .then(({ users: u, sessions: s }) => {
         setUsers(u)
-        if (u.length > 0) setSelectedId(u[0].id)
+        if (u.length > 0) {
+          const erin = u.find((user: User) => user.child_name === 'Erin')
+          setSelectedId((erin ?? u[0]).id)
+        }
         setAllSessions(s)
         setLoading(false)
       })
@@ -147,6 +150,8 @@ export default function ParentPage() {
     }
   }
   const maxSecs = Math.max(...last7.map(d => secondsByDay[d]), 1)
+  const total7Secs = last7.reduce((sum, d) => sum + secondsByDay[d], 0)
+  const avg7Secs = Math.round(total7Secs / 7)
 
   // Top stumble words
   const wordCounts: Record<string, number> = {}
@@ -223,7 +228,10 @@ export default function ParentPage() {
 
             {/* Reading time — last 7 days */}
             <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm">
-              <p className="font-heading font-bold text-ink mb-4">Reading Time — Last 7 Days</p>
+              <div className="flex items-baseline justify-between mb-4">
+                <p className="font-heading font-bold text-ink">Reading Time — Last 7 Days</p>
+                <p className="text-xs font-heading text-ink-light">avg {avg7Secs > 0 ? fmtTime(avg7Secs) : '—'}/day</p>
+              </div>
               <div className="flex items-end gap-2 h-24">
                 {last7.map(day => {
                   const secs = secondsByDay[day]

@@ -7,6 +7,7 @@ export interface User {
   current_streak: number
   longest_streak: number
   coins: number
+  game_plays_available: number
   avatar_equipped: Record<string, string>
   created_at: string
 }

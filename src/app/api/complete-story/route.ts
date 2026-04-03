@@ -141,6 +141,7 @@ export async function POST(request: Request) {
       current_streak: newStreak,
       longest_streak: newLongestStreak,
       coins: newTotalCoins,
+      game_plays_available: (user.game_plays_available ?? 0) + starsEarned,
     })
     .eq('id', userId)
 

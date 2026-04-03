@@ -297,7 +297,7 @@ export default function HomePage() {
       </div>
 
       {/* Main CTA */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 gap-4">
         <div className="text-center">
           <div className="text-7xl mb-3">🏰</div>
           <h2 className="text-3xl font-heading font-bold text-ink mb-1">Ready for adventure?</h2>
@@ -309,6 +309,17 @@ export default function HomePage() {
         >
           Choose a Story 📖
         </button>
+        {(user.game_plays_available ?? 0) > 0 && (
+          <button
+            onClick={() => router.push('/games')}
+            className="w-full max-w-xs bg-white border-2 border-gold font-heading font-bold text-xl py-4 rounded-3xl active:scale-95 transition-transform flex items-center justify-center gap-3"
+          >
+            <span>🎮 Play Games</span>
+            <span className="bg-gold text-white text-sm font-bold px-2.5 py-0.5 rounded-full">
+              {user.game_plays_available}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Bottom nav */}
@@ -321,13 +332,23 @@ export default function HomePage() {
           <span className="text-2xl">🏆</span>
           <span className="text-xs font-heading">Badges</span>
         </button>
+        <button
+          onClick={() => (user.game_plays_available ?? 0) > 0 && router.push('/games')}
+          className={`flex flex-col items-center gap-1 relative ${(user.game_plays_available ?? 0) > 0 ? 'text-ink' : 'text-ink-light opacity-40'}`}
+        >
+          <span className="relative">
+            <span className="text-2xl">🎮</span>
+            {(user.game_plays_available ?? 0) > 0 && (
+              <span className="absolute -top-1 -right-1.5 bg-gold text-white text-[9px] font-heading font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
+                {user.game_plays_available}
+              </span>
+            )}
+          </span>
+          <span className="text-xs font-heading">Games</span>
+        </button>
         <button onClick={() => router.push('/store')} className="flex flex-col items-center gap-1 text-ink-light">
           <span className="text-2xl">🛍️</span>
           <span className="text-xs font-heading">Store</span>
-        </button>
-        <button onClick={() => router.push('/users')} className="flex flex-col items-center gap-1 text-ink-light">
-          <span className="text-2xl">👤</span>
-          <span className="text-xs font-heading">Switch</span>
         </button>
         <button onClick={() => router.push('/parent')} className="flex flex-col items-center gap-1 text-ink-light">
           <span className="text-2xl">🔒</span>

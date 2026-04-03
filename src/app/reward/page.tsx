@@ -41,6 +41,8 @@ function RewardScreen() {
   const todaySecs = Number(searchParams.get('todaySecs') ?? 0)
   const currentStreak = Number(searchParams.get('streak') ?? 0)
   const coinsGained = Number(searchParams.get('coins') ?? 0)
+  const gameCoins = Number(searchParams.get('gameCoins') ?? 0)
+  const gameStars = Number(searchParams.get('gameStars') ?? 0)
 
   function fmtTime(secs: number) {
     const m = Math.floor(secs / 60)
@@ -128,7 +130,12 @@ function RewardScreen() {
             <p className="text-xs font-heading font-semibold text-ink-muted tracking-widest mb-1">
               QUEST COINS EARNED
             </p>
-            <p className="text-3xl font-heading font-bold text-gold">+{coinsGained} 🪙</p>
+            <p className="text-3xl font-heading font-bold text-gold">+{coinsGained + gameCoins} 🪙</p>
+            {gameCoins > 0 && (
+              <p className="text-xs font-body text-ink-light mt-0.5">
+                {coinsGained} reading + {gameCoins} games
+              </p>
+            )}
           </div>
           <button
             onClick={() => {
@@ -139,6 +146,19 @@ function RewardScreen() {
             Visit Store
           </button>
         </div>
+
+        {/* Game bonus stars */}
+        {gameStars > 0 && (
+          <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm text-center">
+            <p className="text-xs font-heading font-semibold text-ink-muted tracking-widest mb-2">
+              GAME BONUS STARS
+            </p>
+            <p className="text-3xl mb-1">{'⭐'.repeat(gameStars)}</p>
+            <p className="text-sm font-body text-ink-light">
+              {gameStars === 2 ? 'Perfect quiz — double star bonus!' : 'Bonus star for finishing all games!'}
+            </p>
+          </div>
+        )}
 
         {/* XP */}
         <div className="bg-white rounded-3xl p-5 border border-gold/20 shadow-sm">
