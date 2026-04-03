@@ -350,6 +350,10 @@ export default function HomePage() {
           <span className="text-2xl">🛍️</span>
           <span className="text-xs font-heading">Store</span>
         </button>
+        <button onClick={() => router.push('/users')} className="flex flex-col items-center gap-1 text-ink-light">
+          <span className="text-2xl">👤</span>
+          <span className="text-xs font-heading">Switch</span>
+        </button>
         <button onClick={() => router.push('/parent')} className="flex flex-col items-center gap-1 text-ink-light">
           <span className="text-2xl">🔒</span>
           <span className="text-xs font-heading">Parent</span>
