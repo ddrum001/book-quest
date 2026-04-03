@@ -86,6 +86,7 @@ export type BadgeId =
   | 'bookworm'
   | 'voice_reader'
   | 'world_explorer'
+  | 'daily_goal'
   | 'streak_2'
   | 'streak_3'
   | 'streak_5'
@@ -172,6 +173,7 @@ export const BADGE_INFO: Record<BadgeId, { name: string; emoji: string; descript
   bookworm: { name: 'Bookworm', emoji: '🐛', description: 'Read 5 stories!' },
   voice_reader: { name: 'Voice Reader', emoji: '🎤', description: 'Finished a story aloud!' },
   world_explorer: { name: 'World Explorer', emoji: '🌍', description: 'Explored all 5 adventure themes!' },
+  daily_goal:    { name: 'Daily Champion', emoji: '🏅', description: 'Read for 20 minutes in a day!' },
   streak_2:  { name: '2-Day Streak',    emoji: '🔥', description: 'Read 2 days in a row!' },
   streak_3:  { name: '3-Day Streak',    emoji: '🔥', description: 'Read 3 days in a row!' },
   streak_5:  { name: '5-Day Streak',    emoji: '🔥', description: 'Read 5 days in a row!' },

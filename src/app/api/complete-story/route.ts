@@ -6,6 +6,8 @@ const XP_BONUS_PERFECT = 10 // no stumble words
 
 const COINS_FOR_STORY = 15
 const COINS_BONUS_PERFECT = 10
+const COINS_DAILY_GOAL = 100
+const DAILY_GOAL_SECS = 20 * 60
 
 const ALL_THEMES = [
   'dragon-kingdom',
@@ -192,6 +194,23 @@ export async function POST(request: Request) {
     0,
   )
 
+  // ── Daily goal bonus (cross the 20-min threshold this session) ────────────────
+  const prevTodaySeconds = todaySeconds - sessionSeconds
+  const dailyGoalReached = prevTodaySeconds < DAILY_GOAL_SECS && todaySeconds >= DAILY_GOAL_SECS
+
+  if (dailyGoalReached) {
+    await supabase
+      .from('users')
+      .update({ coins: newTotalCoins + COINS_DAILY_GOAL })
+      .eq('id', userId)
+
+    // One-time badge — unique constraint silently drops if already earned
+    const { error: badgeError } = await supabase
+      .from('badges')
+      .insert({ user_id: userId, badge_id: 'daily_goal' })
+    if (!badgeError) newlyEarned.push('daily_goal')
+  }
+
   return Response.json({
     xpGained,
     starsEarned,
@@ -206,5 +225,7 @@ export async function POST(request: Request) {
     currentStreak: newStreak,
     coinsGained,
     newTotalCoins,
+    dailyGoalBonus: dailyGoalReached ? COINS_DAILY_GOAL : 0,
+    dailyGoalReached,
   })
 }

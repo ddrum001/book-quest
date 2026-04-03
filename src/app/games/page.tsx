@@ -706,9 +706,10 @@ function GamesScreen() {
   }
 
   if (phase === 'scramble') {
+    const scrambleVocab = vocab.length ? vocab.slice(0, 1) : [{ word: 'story', hint: 'A tale you just read' }]
     return (
       <ScrambleGame
-        vocab={vocab.length ? vocab : [{ word: 'story', hint: 'A tale you just read' }]}
+        vocab={scrambleVocab}
         theme={theme}
         onDone={afterScramble}
       />
@@ -718,7 +719,7 @@ function GamesScreen() {
   if (phase === 'hangman' && gameData?.hangman?.length) {
     return (
       <HangmanGame
-        puzzles={gameData.hangman}
+        puzzles={gameData.hangman.slice(0, 1)}
         theme={theme}
         onDone={afterHangman}
       />
@@ -728,7 +729,7 @@ function GamesScreen() {
   if (phase === 'quiz' && gameData?.quiz?.length) {
     return (
       <QuizGame
-        questions={gameData.quiz}
+        questions={gameData.quiz.slice(0, 1)}
         theme={theme}
         onDone={afterQuiz}
       />

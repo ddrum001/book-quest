@@ -473,6 +473,7 @@ function StoryScreen() {
         todaySecs: String(data.todaySeconds ?? 0),
         streak: String(data.currentStreak ?? 0),
         coins: String(data.coinsGained ?? 0),
+        goalBonus: String(data.dailyGoalBonus ?? 0),
       })
       router.push(`/games?${params.toString()}`)
     }

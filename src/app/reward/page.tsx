@@ -43,6 +43,7 @@ function RewardScreen() {
   const coinsGained = Number(searchParams.get('coins') ?? 0)
   const gameCoins = Number(searchParams.get('gameCoins') ?? 0)
   const gameStars = Number(searchParams.get('gameStars') ?? 0)
+  const goalBonus = Number(searchParams.get('goalBonus') ?? 0)
 
   function fmtTime(secs: number) {
     const m = Math.floor(secs / 60)
@@ -84,6 +85,20 @@ function RewardScreen() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6">
+
+        {/* Daily goal bonus */}
+        {goalBonus > 0 && (
+          <div className="bg-white rounded-3xl p-5 text-center border-2 border-gold/40 shadow-sm">
+            <div className="text-5xl mb-2">🏅</div>
+            <p className="text-xs font-heading font-semibold text-ink-muted tracking-widest mb-1">
+              DAILY GOAL REACHED!
+            </p>
+            <p className="text-2xl font-heading font-bold text-gold mb-1">+{goalBonus} 🪙</p>
+            <p className="text-sm font-body text-ink-light">
+              20 minutes of reading — incredible! Keep it up!
+            </p>
+          </div>
+        )}
 
         {/* Streak */}
         {currentStreak > 0 && (
