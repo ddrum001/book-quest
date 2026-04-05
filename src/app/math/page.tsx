@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getLevel, getXpInCurrentLevel, XP_PER_LEVEL, BADGE_INFO, type BadgeId } from '@/lib/types'
 
 // ── 8s multiplication facts ──────────────────────────────────────────────────
-const ALL_FACTS = Array.from({ length: 12 }, (_, i) => ({
+const ALL_FACTS = Array.from({ length: 10 }, (_, i) => ({
   factor: i + 1,
   answer: 8 * (i + 1),
 }))
@@ -91,7 +91,7 @@ export default function MathPage() {
       } else {
         setCurrent(c => c + 1)
       }
-    }, 900)
+    }, 3000)
   }, [feedback, selected, questions, current, results])
 
   async function claimReward() {
