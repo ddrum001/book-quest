@@ -105,6 +105,7 @@ export type ThemeId =
   | 'enchanted-forest'
   | 'pirate-seas'
   | 'zombies-seabrook'
+  | 'disneyland'
 
 export interface ThemeConfig {
   id: ThemeId
@@ -163,6 +164,14 @@ export const THEMES: ThemeConfig[] = [
     color: '#C0227A',
     bg: '#FFF0F8',
     description: 'Join Erin at Seabrook High with Zed, Addison, and the whole crew!',
+  },
+  {
+    id: 'disneyland',
+    name: 'Disneyland Mysteries',
+    emoji: '🏰',
+    color: '#1565C0',
+    bg: '#EEF4FF',
+    description: 'Hunt for Hidden Mickeys and uncover the secret history of the Happiest Place on Earth!',
   },
 ]
 

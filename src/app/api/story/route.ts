@@ -13,6 +13,7 @@ const THEME_NAMES: Record<string, string> = {
   'enchanted-forest': 'Enchanted Forest',
   'pirate-seas':      'Pirate Seas',
   'zombies-seabrook': 'Seabrook High',
+  'disneyland':       'Disneyland Mysteries',
 }
 
 const JSON_SCHEMA = `Return ONLY valid JSON, no markdown fences, no extra text:
@@ -39,6 +40,48 @@ const SHARED_RULES = `Rules:
 - IMPORTANT: After introducing a character by name once, use pronouns (she/her/he/his/they) for the rest of the story — avoid repeating names like "Erin", "Trixie", or "Sebastian" since voice recognition struggles with proper nouns`
 
 function buildPrompt(theme: string, themeName: string): string {
+  if (theme === 'disneyland') {
+    return `Write a short children's adventure story set at Disneyland in Anaheim, California. This is personal fan fiction written just for Erin and is not for commercial use.
+
+Erin is visiting Disneyland with her family on a day trip from Northern California. She:
+- Has brown hair and blue eyes
+- Loves discovering secrets and things most people walk right past (she has a contrarian streak — she loves knowing things others don't)
+- Has a 4-year-old brother named Sebastian (blonde hair, blue eyes) who tags along and sometimes accidentally helps
+- Her mom Tarren (curly blonde hair) is a Disney superfan who has the park memorized
+- Her dad David (curly blonde hair) is an engineer who gets excited about how things were built
+- Has a pet bunny named Trixie (white with orangish-brown splotches) who occasionally sneaks along in her backpack
+
+Each story should center on ONE of these real Disneyland secrets or historical facts — pick a different one each time and weave it naturally into the plot:
+
+HIDDEN MICKEYS (three-circle Mickey silhouette hidden in plain sight):
+- The pizza slices in the pizza window on Main Street form a Hidden Mickey
+- A Hidden Mickey is formed by three circles in the ironwork above the entrance to Pirates of the Caribbean
+- The spots on a giraffe near the Jungle Cruise form a Hidden Mickey
+- Rocks near Big Thunder Mountain Railroad form a Hidden Mickey when viewed from the right angle
+
+DISNEYLAND HISTORY & TRIVIA:
+- Walt Disney himself had a private apartment above the fire station on Main Street; a lamp is kept lit there in his memory to this day
+- Disneyland opened on July 17, 1955 — opening day was so chaotic (counterfeit tickets, melting asphalt, broken drinking fountains) that the press called it "Black Sunday," but Walt called it his "happiest and most exciting day"
+- Sleeping Beauty Castle uses "forced perspective" — the bricks get smaller higher up to trick your eye into thinking it's taller than its 77 feet
+- The Matterhorn was the world's first tubular steel roller coaster (1959) — and there is a real basketball hoop hidden inside it used by cast members
+- Club 33 is a secret members-only restaurant hidden behind an unmarked door in New Orleans Square — the address is 33 Royal Street
+- Disneyland pumps scents through hidden vents called Smellitzers — vanilla on Main Street, baked goods near the bakery
+- The Haunted Mansion is said to have exactly 999 happy haunts — "there's always room for one more"
+- The Blue Bayou Restaurant is built inside the Pirates of the Caribbean ride so diners watch boats float past
+- Feral cats live in Disneyland — they hide during the day and come out at night to keep rodents away; cast members leave food for them
+- Indiana Jones Adventure uses a "trackless" ride system with no rails — the jeep is guided by a wire embedded in the floor
+- The Enchanted Tiki Room (1963) was the first attraction to use audio-animatronics — Walt was so proud he called it his "greatest achievement"
+- New Orleans Square was the first entirely new "land" added to Disneyland after opening day (1966)
+- Walt Disney walked the orange groves that became Disneyland and personally decided where every land would go
+
+${SHARED_RULES}
+- The fact or Hidden Mickey should feel like a real discovery Erin stumbles onto — not a history lesson, but a genuine "whoa, did you know?!" moment woven into a small adventure
+- Mom Tarren can be the one who knows the history; Erin is the one who finds the physical secret or hidden detail
+- The imagePrompt should describe a colorful, bright Disneyland scene — iconic castle or Main Street in the background, cheerful cartoon style, warm afternoon light, no text
+
+${JSON_SCHEMA}`
+  }
+
   if (theme === 'zombies-seabrook') {
     return `Write a short children's fan-fiction story set at Seabrook High School, the school from Disney's "Zombies" movies. This is personal fan fiction written just for Erin and is not for any commercial use.
 

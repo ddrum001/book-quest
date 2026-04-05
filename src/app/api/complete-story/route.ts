@@ -16,6 +16,7 @@ const ALL_THEMES = [
   'enchanted-forest',
   'pirate-seas',
   'zombies-seabrook',
+  'disneyland',
 ]
 
 const STREAK_BADGES: Array<{ days: number; id: BadgeId }> = [
