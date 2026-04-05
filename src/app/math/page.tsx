@@ -91,7 +91,7 @@ export default function MathPage() {
       } else {
         setCurrent(c => c + 1)
       }
-    }, 3000)
+    }, 1200)
   }, [feedback, selected, questions, current, results])
 
   async function claimReward() {
