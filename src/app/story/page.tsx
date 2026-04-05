@@ -120,7 +120,7 @@ function levenshtein(a: string, b: string): number {
   return row[b.length]
 }
 
-// Lenient match: exact > homophone > prefix > fuzzy edit-distance.
+// Lenient match for the CURRENT word: exact > homophone > prefix > fuzzy.
 // Skip fuzzy for very short words to avoid false positives ("I" ≠ "in").
 function matches(spoken: string, target: string): boolean {
   if (!spoken || !target) return false
@@ -131,6 +131,16 @@ function matches(spoken: string, target: string): boolean {
   if (target.length >= 5 && spoken.length >= 4 && target.startsWith(spoken.slice(0, 4))) return true
   // Fuzzy: 1 edit for words up to 6 chars, 2 edits for longer
   return levenshtein(spoken, target) <= (target.length <= 6 ? 1 : 2)
+}
+
+// Stricter match for the ONE-WORD lookahead only — no prefix heuristic,
+// tighter edit distance. Avoids false advances when a spoken word vaguely
+// resembles something two positions ahead.
+function matchesStrict(spoken: string, target: string): boolean {
+  if (!spoken || !target) return false
+  if (spoken === target) return true
+  if (spoken.length <= 2 || target.length <= 2) return false
+  return levenshtein(spoken, target) <= 1
 }
 
 function tokenize(text: string): WordToken[] {
@@ -305,9 +315,8 @@ function StoryScreen() {
 
     const norm = normalize(spoken)
     const matchIdx =
-      matches(norm, words[idx]?.clean ?? '')     ? idx
-      : matches(norm, words[idx + 1]?.clean ?? '') ? idx + 1
-      : matches(norm, words[idx + 2]?.clean ?? '') ? idx + 2
+      matches(norm, words[idx]?.clean ?? '')                        ? idx
+      : matchesStrict(norm, words[idx + 1]?.clean ?? '')            ? idx + 1
       : -1
 
     if (matchIdx !== -1) {
