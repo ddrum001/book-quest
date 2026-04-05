@@ -240,7 +240,7 @@ export default function MathPage() {
 
     const recognition = new SpeechAPI()
     recognition.continuous = true
-    recognition.interimResults = false
+    recognition.interimResults = true
     recognition.lang = 'en-US'
 
     recognition.onstart = () => setListening(true)
@@ -261,12 +261,19 @@ export default function MathPage() {
       }
     }
     recognition.onresult = (event: any) => {
+      if (challengeFeedbackRef.current !== null) return
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (!event.results[i].isFinal) continue
         const transcript = event.results[i][0].transcript.trim()
+        const isFinal = event.results[i].isFinal as boolean
         const n = parseSpokenNumber(transcript)
-        if (n !== null && challengeFeedbackRef.current === null) {
+        if (n === null) continue
+        // Submit immediately if the interim already matches this question's answer
+        // (no false-positive risk — wrong partials won't equal the correct answer),
+        // or on any final result containing a valid number.
+        const currentAnswer = questionsRef.current[currentRef.current]?.answer
+        if (isFinal || n === currentAnswer) {
           submitChallengeRef.current?.(n)
+          return
         }
       }
     }
