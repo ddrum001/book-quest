@@ -320,6 +320,12 @@ export default function HomePage() {
             </span>
           </button>
         )}
+        <button
+          onClick={() => router.push('/math')}
+          className="w-full max-w-xs bg-white border-2 border-amber-400 text-amber-700 font-heading font-bold text-xl py-4 rounded-3xl active:scale-95 transition-transform"
+        >
+          🧮 Times Tables
+        </button>
       </div>
 
       {/* Bottom nav */}

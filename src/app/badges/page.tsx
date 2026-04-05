@@ -24,6 +24,7 @@ const BADGE_ORDER: BadgeId[] = [
   'streak_21',
   'streak_30',
   'streak_60',
+  'math_8s',
 ]
 
 export default function BadgesPage() {

@@ -96,6 +96,7 @@ export type BadgeId =
   | 'streak_21'
   | 'streak_30'
   | 'streak_60'
+  | 'math_8s'
 
 export type ThemeId =
   | 'dragon-kingdom'
@@ -183,6 +184,7 @@ export const BADGE_INFO: Record<BadgeId, { name: string; emoji: string; descript
   streak_21: { name: '3-Week Streak',   emoji: '🥇', description: 'Three weeks straight — incredible!' },
   streak_30: { name: '30-Day Streak',   emoji: '👑', description: 'A whole month of daily reading!' },
   streak_60: { name: '60-Day Streak',   emoji: '👑', description: 'Two months of reading every single day!' },
+  math_8s:   { name: 'Times 8 Master', emoji: '🧮', description: 'Got a perfect score on the 8s times tables!' },
 }
 
 export const XP_PER_LEVEL = 100
