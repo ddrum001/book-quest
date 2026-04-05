@@ -47,13 +47,9 @@ const NUMBER_HOMOPHONES: Record<string, string> = {
   'for': 'four',
   'won': 'one',
   'free': 'three',
-  'sex': 'six',
-  'ate': 'eight',
   'nein': 'nine',
   'tin': 'ten',
   'fort': 'forty',
-  'fifthy': 'fifty',
-  'sixty': 'sixty',
 }
 
 // Parse a raw speech transcript like "fifty six", "56", or "eighty" into an integer
