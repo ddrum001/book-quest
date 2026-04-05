@@ -198,6 +198,7 @@ function StoryScreen() {
   const [speechEnabled, setSpeechEnabled] = useState(false)
   const [showSkipConfirm, setShowSkipConfirm] = useState(false)
   const [claiming, setClaiming] = useState(false)
+  const [rewardParams, setRewardParams] = useState<string | null>(null)
   // Synchronous guard — ref updates are immediate unlike setState, so rapid taps
   // all see the true value set by the first tap before any re-render occurs
   const claimingRef = useRef(false)
@@ -484,7 +485,8 @@ function StoryScreen() {
         coins: String(data.coinsGained ?? 0),
         goalBonus: String(data.dailyGoalBonus ?? 0),
       })
-      router.push(`/games?${params.toString()}`)
+      setRewardParams(params.toString())
+      setClaiming(false)
     }
 
     const allDifficult = [...new Set([...stumbleList, ...skippedList])]
@@ -521,14 +523,32 @@ function StoryScreen() {
             </div>
           )}
 
-          <button
-            onClick={handleClaimRewards}
-            disabled={claiming}
-            className="w-full max-w-xs text-white font-heading font-bold text-xl py-5 rounded-3xl shadow-lg active:scale-95 transition-transform disabled:opacity-60"
-            style={{ backgroundColor: theme.color }}
-          >
-            Claim Rewards! 🏆
-          </button>
+          {!rewardParams ? (
+            <button
+              onClick={handleClaimRewards}
+              disabled={claiming}
+              className="w-full max-w-xs text-white font-heading font-bold text-xl py-5 rounded-3xl shadow-lg active:scale-95 transition-transform disabled:opacity-60"
+              style={{ backgroundColor: theme.color }}
+            >
+              {claiming ? 'Saving…' : 'Claim Rewards! 🏆'}
+            </button>
+          ) : (
+            <div className="w-full max-w-xs flex flex-col gap-3">
+              <button
+                onClick={() => router.push(`/games?${rewardParams}`)}
+                className="w-full text-white font-heading font-bold text-xl py-5 rounded-3xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+                style={{ backgroundColor: theme.color }}
+              >
+                🎮 Play Games
+              </button>
+              <button
+                onClick={() => router.push(`/reward?${rewardParams}`)}
+                className="w-full bg-white border border-gold/30 text-ink font-heading font-semibold text-lg py-4 rounded-3xl active:scale-95 transition-transform"
+              >
+                See My Rewards →
+              </button>
+            </div>
+          )}
 
           <button onClick={() => router.push('/')} className="text-ink-light font-heading text-sm">
             Back to Home
