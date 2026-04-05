@@ -26,6 +26,7 @@ export default function StorePage() {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [previewId, setPreviewId] = useState<string | null>(null)
 
   // Keep ref in sync so event handlers always read the latest equipped state
   equippedRef.current = equipped
@@ -94,11 +95,17 @@ export default function StorePage() {
       .eq('id', userId)
     setUser(prev => prev ? { ...prev, coins: prev.coins - item.cost, owned_items: newOwnedItems } : prev)
     setOwnedIds(prev => new Set([...prev, item.id]))
-    // Auto-equip on purchase
+    // Auto-equip on purchase and clear preview
     const next = { ...equippedRef.current, [item.category]: item.id }
     await saveEquipped(next)
+    setPreviewId(null)
     setBusy(null)
   }
+
+  const previewItem = previewId ? STORE_ITEMS.find(i => i.id === previewId) ?? null : null
+  const displayEquipped = previewItem
+    ? { ...equipped, [previewItem.category]: previewItem.id }
+    : equipped
 
   if (loading || !user) {
     return (
@@ -127,16 +134,23 @@ export default function StorePage() {
       </header>
 
       {/* Avatar preview */}
-      <div className="shrink-0 flex flex-col items-center py-3 gap-1">
-        <Avatar equipped={equipped} variant="full" size={120} />
-        <p className={`text-xs font-heading transition-opacity duration-300 ${
-          saveStatus === 'idle' ? 'opacity-0' :
-          saveStatus === 'saving' ? 'opacity-100 text-ink-light' :
-          saveStatus === 'saved' ? 'opacity-100 text-green-500' :
-          'opacity-100 text-red-500'
-        }`}>
-          {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? '⚠ Save failed' : '✓ Saved'}
-        </p>
+      <div className="shrink-0 flex flex-col items-center py-3 gap-2">
+        <Avatar equipped={displayEquipped} variant="full" size={120} />
+        {previewItem ? (
+          <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-300 rounded-full px-3 py-1">
+            <span className="text-amber-700 text-xs font-heading font-semibold">👁 Trying: {previewItem.name}</span>
+            <button onClick={() => setPreviewId(null)} className="text-amber-500 font-bold text-sm leading-none ml-0.5">✕</button>
+          </div>
+        ) : (
+          <p className={`text-xs font-heading transition-opacity duration-300 ${
+            saveStatus === 'idle' ? 'opacity-0' :
+            saveStatus === 'saving' ? 'opacity-100 text-ink-light' :
+            saveStatus === 'saved' ? 'opacity-100 text-green-500' :
+            'opacity-100 text-red-500'
+          }`}>
+            {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? '⚠ Save failed' : '✓ Saved'}
+          </p>
+        )}
       </div>
 
       {/* Tabs */}
@@ -167,8 +181,10 @@ export default function StorePage() {
           return (
             <div
               key={item.id}
-              className={`bg-white rounded-3xl px-4 py-4 border flex items-center gap-4 ${
-                isEquipped ? 'border-gold/50 shadow-md' : 'border-gold/20 shadow-sm'
+              className={`rounded-3xl px-4 py-4 border flex items-center gap-4 ${
+                isEquipped ? 'bg-white border-gold/50 shadow-md' :
+                previewId === item.id ? 'bg-amber-50 border-amber-300 shadow-sm' :
+                'bg-white border-gold/20 shadow-sm'
               }`}
             >
               <div
@@ -194,13 +210,25 @@ export default function StorePage() {
                   {isEquipped ? 'Equipped ✓' : 'Equip'}
                 </button>
               ) : (
-                <button
-                  onClick={() => handleBuy(item)}
-                  disabled={!canAfford || isBusy}
-                  className="shrink-0 px-4 py-2 rounded-2xl font-heading font-semibold text-sm bg-gold text-white disabled:opacity-40 active:scale-95 transition-transform"
-                >
-                  {isBusy ? '…' : 'Buy'}
-                </button>
+                <div className="shrink-0 flex gap-2">
+                  <button
+                    onClick={() => setPreviewId(prev => prev === item.id ? null : item.id)}
+                    className={`px-3 py-2 rounded-2xl font-heading font-semibold text-sm active:scale-95 transition-all border ${
+                      previewId === item.id
+                        ? 'bg-amber-100 border-amber-400 text-amber-700'
+                        : 'bg-white border-gold/30 text-ink'
+                    }`}
+                  >
+                    {previewId === item.id ? 'On ✓' : 'Try'}
+                  </button>
+                  <button
+                    onClick={() => handleBuy(item)}
+                    disabled={!canAfford || isBusy}
+                    className="px-4 py-2 rounded-2xl font-heading font-semibold text-sm bg-gold text-white disabled:opacity-40 active:scale-95 transition-transform"
+                  >
+                    {isBusy ? '…' : 'Buy'}
+                  </button>
+                </div>
               )}
             </div>
           )
