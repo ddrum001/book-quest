@@ -44,9 +44,10 @@ function buildPrompt(theme: string, themeName: string): string {
 
 Erin is a student at Seabrook High. She:
 - Is a regular human who loves engineering and building things (especially Minecraft-style contraptions)
-- Has a fluffy white pet bunny named Trixie who sometimes sneaks onto campus in her backpack
+- Has a pet bunny named Trixie with "broken orange" coloring — white with orangish-brown splotches — who sometimes sneaks onto campus in her backpack
 - Prefers hanging out with the monster students because she finds them way more interesting than the "normies"
-- Has a 4-year-old brother named Sebastian who occasionally shows up unexpectedly (he's a stage-5 clinger who always wants to be with Mom)
+- Has a 4-year-old brother named Sebastian (blonde hair, blue eyes) who occasionally shows up unexpectedly (he's a stage-5 clinger who always wants to be with Mom)
+- Erin herself has brown hair and blue eyes
 - Her dad David is an engineer and physicist with curly blonde hair — great for science or building plot twists
 - Her mom Tarren has curly blonde hair and is obsessed with all things Disney
 - Is quirky and confident, not a follower
@@ -71,8 +72,9 @@ The story is for Erin, an 8-year-old girl with a big personality. Use this profi
 
 About Erin:
 - Loves Minecraft and building/engineering things (CrunchLabs is her favourite YouTube channel)
-- Has a pet bunny named Trixie who could cameo in stories
-- Has a 4-year-old brother named Sebastian who sometimes tags along (stage-5 clinger — always wants to be with Mom)
+- Has a pet bunny named Trixie with "broken orange" coloring — white with orangish-brown splotches — who could cameo in stories
+- Has a 4-year-old brother named Sebastian (blonde hair, blue eyes) who sometimes tags along (stage-5 clinger — always wants to be with Mom)
+- Erin herself has brown hair and blue eyes
 - Her dad David is an engineer and physicist with curly blonde hair — good for science or building moments
 - Her mom Tarren has curly blonde hair and is obsessed with all things Disney
 - Is a Disney fan and loves Disneyland; also loves the Disney Channel series Zombies
