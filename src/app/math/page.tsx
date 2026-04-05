@@ -40,6 +40,22 @@ function starsForScore(score: number): number {
   return 0
 }
 
+// Normalize spoken homophones before number parsing
+const NUMBER_HOMOPHONES: Record<string, string> = {
+  'ate': 'eight',
+  'to': 'two', 'too': 'two',
+  'for': 'four',
+  'won': 'one',
+  'free': 'three',
+  'sex': 'six',
+  'ate': 'eight',
+  'nein': 'nine',
+  'tin': 'ten',
+  'fort': 'forty',
+  'fifthy': 'fifty',
+  'sixty': 'sixty',
+}
+
 // Parse a raw speech transcript like "fifty six", "56", or "eighty" into an integer
 function parseSpokenNumber(raw: string): number | null {
   const ONES: Record<string, number> = {
@@ -52,7 +68,9 @@ function parseSpokenNumber(raw: string): number | null {
     'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
     'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
   }
+  // Normalize homophones word by word before parsing
   const text = raw.toLowerCase().replace(/-/g, ' ').trim()
+    .split(/\s+/).map(w => NUMBER_HOMOPHONES[w] ?? w).join(' ')
   // Direct digit string: "56"
   const direct = parseInt(text)
   if (!isNaN(direct) && direct >= 0) return direct
