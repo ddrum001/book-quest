@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getXpInCurrentLevel, XP_PER_LEVEL, BADGE_INFO, type BadgeId } from '@/lib/types'
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 
 // ── Facts & helpers ────────────────────────────────────────────────────────────
 
@@ -41,8 +40,8 @@ function starsForScore(score: number): number {
   return 0
 }
 
-// Parse spoken words like "fifty six" or "56" into an integer
-function parseSpokenNumber(words: string[]): number | null {
+// Parse a raw speech transcript like "fifty six", "56", or "eighty" into an integer
+function parseSpokenNumber(raw: string): number | null {
   const ONES: Record<string, number> = {
     'zero': 0, 'oh': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
     'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
@@ -53,7 +52,8 @@ function parseSpokenNumber(words: string[]): number | null {
     'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
     'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
   }
-  const text = words.join(' ').replace(/-/g, ' ').trim()
+  const text = raw.toLowerCase().replace(/-/g, ' ').trim()
+  // Direct digit string: "56"
   const direct = parseInt(text)
   if (!isNaN(direct) && direct >= 0) return direct
   const parts = text.split(/\s+/).filter(Boolean)
@@ -102,6 +102,7 @@ export default function MathPage() {
   // Challenge state
   const [inputValue, setInputValue] = useState('')
   const [speechEnabled, setSpeechEnabled] = useState(false)
+  const [listening, setListening] = useState(false)
   const [challengeFeedback, setChallengeFeedback] = useState<'correct' | 'wrong' | null>(null)
 
   // Reward
@@ -113,12 +114,14 @@ export default function MathPage() {
   const currentRef = useRef(0)
   const resultsRef = useRef<boolean[]>([])
   const challengeFeedbackRef = useRef<'correct' | 'wrong' | null>(null)
-  const spokenBufferRef = useRef<string[]>([])
+  const speechEnabledRef = useRef(false)
+  const submitChallengeRef = useRef<((n: number) => void) | null>(null)
 
   useEffect(() => { questionsRef.current = questions }, [questions])
   useEffect(() => { currentRef.current = current }, [current])
   useEffect(() => { resultsRef.current = results }, [results])
   useEffect(() => { challengeFeedbackRef.current = challengeFeedback }, [challengeFeedback])
+  useEffect(() => { speechEnabledRef.current = speechEnabled }, [speechEnabled])
 
   useEffect(() => {
     const id = localStorage.getItem('bookquest_user_id')
@@ -151,7 +154,6 @@ export default function MathPage() {
     setInputValue('')
     setChallengeFeedback(null)
     challengeFeedbackRef.current = null
-    spokenBufferRef.current = []
     if (gameMode === 'challenge') setSpeechEnabled(true)
     else setSpeechEnabled(false)
     setPhase('playing')
@@ -190,7 +192,6 @@ export default function MathPage() {
     setChallengeFeedback(isCorrect ? 'correct' : 'wrong')
     challengeFeedbackRef.current = isCorrect ? 'correct' : 'wrong'
     setSpeechEnabled(false)
-    spokenBufferRef.current = []
     const newResults = [...resultsRef.current, isCorrect]
     setTimeout(() => {
       setChallengeFeedback(null)
@@ -209,21 +210,60 @@ export default function MathPage() {
     }, 1200)
   }, [])
 
-  // ── Challenge: speech handler ─────────────────────────────────────────────────
-  const handleSpokenWord = useCallback((word: string) => {
-    if (challengeFeedbackRef.current !== null) return
-    const buf = [...spokenBufferRef.current, word]
-    spokenBufferRef.current = buf
-    const n = parseSpokenNumber(buf)
-    if (n !== null) {
-      submitChallenge(n)
+  // Keep submitChallengeRef current so the speech effect can call it without restarts
+  useEffect(() => { submitChallengeRef.current = submitChallenge }, [submitChallenge])
+
+  // ── Inline speech recognition for numbers ─────────────────────────────────────
+  // We can't use useSpeechRecognition here because it strips digits before emitting.
+  // Instead we read the raw final transcript and parse it as a number directly.
+  useEffect(() => {
+    const SpeechAPI =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!speechEnabled || !SpeechAPI) {
+      setListening(false)
       return
     }
-    // Overflow: reset buffer so stray words don't get stuck
-    if (buf.length > 3) spokenBufferRef.current = []
-  }, [submitChallenge])
 
-  const { listening } = useSpeechRecognition(handleSpokenWord, speechEnabled)
+    const recognition = new SpeechAPI()
+    recognition.continuous = true
+    recognition.interimResults = false
+    recognition.lang = 'en-US'
+
+    recognition.onstart = () => setListening(true)
+    recognition.onend = () => {
+      setListening(false)
+      // Auto-restart while still active
+      if (speechEnabledRef.current) {
+        setTimeout(() => {
+          if (speechEnabledRef.current) {
+            try { recognition.start() } catch { /* already started */ }
+          }
+        }, 200)
+      }
+    }
+    recognition.onerror = (e: any) => {
+      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        console.warn('Math speech error:', e.error)
+      }
+    }
+    recognition.onresult = (event: any) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (!event.results[i].isFinal) continue
+        const transcript = event.results[i][0].transcript.trim()
+        const n = parseSpokenNumber(transcript)
+        if (n !== null && challengeFeedbackRef.current === null) {
+          submitChallengeRef.current?.(n)
+        }
+      }
+    }
+
+    try { recognition.start() } catch { /* permission denied */ }
+
+    return () => {
+      recognition.onend = null
+      try { recognition.stop() } catch { /* ignore */ }
+    }
+  }, [speechEnabled])
 
   // ── Claim reward ──────────────────────────────────────────────────────────────
   async function claimReward() {
