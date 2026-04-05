@@ -76,7 +76,7 @@ DISNEYLAND HISTORY & TRIVIA:
 
 ${SHARED_RULES}
 - The fact or Hidden Mickey should feel like a real discovery Erin stumbles onto — not a history lesson, but a genuine "whoa, did you know?!" moment woven into a small adventure
-- Mom Tarren can be the one who knows the history; Erin is the one who finds the physical secret or hidden detail
+- Dad David is the one who knows the history and engineering trivia; Mom Tarren is the experiential superfan who loves the parades, Fantasmic, and the overall vibe — Erin is the one who physically discovers the secret or hidden detail
 - The imagePrompt should describe a colorful, bright Disneyland scene — iconic castle or Main Street in the background, cheerful cartoon style, warm afternoon light, no text
 
 ${JSON_SCHEMA}`
