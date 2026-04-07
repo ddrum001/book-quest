@@ -9,12 +9,13 @@ const MIN_POOL_SIZE = 3
 const client = new Anthropic()
 
 const THEME_NAMES: Record<string, string> = {
-  'dragon-kingdom':   'Dragon Kingdom',
+  'minecraft':        'Minecraft',
   'ocean-depths':     'Ocean Depths',
   'star-explorer':    'Star Explorer',
   'enchanted-forest': 'Enchanted Forest',
   'pirate-seas':      'Pirate Seas',
   'zombies-seabrook': 'Seabrook High',
+  'disneyland':       'Disneyland Mysteries',
 }
 
 const JSON_SCHEMA = `Return ONLY valid JSON, no markdown fences, no extra text:
@@ -40,6 +41,34 @@ const SHARED_RULES = `Rules:
 - IMPORTANT: After introducing a character by name once, use pronouns (she/her/he/his/they) for the rest of the story — avoid repeating names like "Erin", "Trixie", or "Sebastian" since voice recognition struggles with proper nouns`
 
 function buildPrompt(theme: string, themeName: string): string {
+  if (theme === 'minecraft') {
+    return `Write a short children's adventure story set inside the world of Minecraft. This is written just for Erin.
+
+Erin has just spawned into a new world. She:
+- Loves building elaborate redstone contraptions and engineering clever solutions — this is her favourite part of the game
+- Has a tamed rabbit in her world named Trixie — white with orange-brown patches, always hopping into trouble
+- Her 4-year-old brother Sebastian joins her world sometimes and immediately starts punching trees with his bare fists
+- Her dad David plays too — he's obsessed with speedrunning and always wants to rush to the Nether
+- Is the kind of player who explores every cave and reads every chest before moving on; she hates missing secrets
+
+Each story should be grounded in ONE real Minecraft mechanic or situation — pick a different one each time:
+- A creeper blowing up something important at the worst possible moment
+- Discovering a stronghold hidden beneath a village she built up
+- Exploring an ancient city in the deep dark (warden nearby, every sound matters)
+- A thunderstorm turning a villager into a witch mid-trade
+- Building a redstone sorting machine that goes hilariously wrong
+- Trading with piglins in the Nether and getting something completely unexpected
+- A raid on her village that she has to defend using only what she has on hand
+- Stumbling into an amethyst geode while mining for iron
+- Accidentally leading a pillager patrol straight back to her base
+
+${SHARED_RULES}
+- Ground the story in real Minecraft mechanics — biomes, mobs, crafting, and items should feel authentic and specific
+- The imagePrompt should describe a colorful Minecraft scene with blocky pixelated terrain, bright saturated colors, no text
+
+${JSON_SCHEMA}`
+  }
+
   if (theme === 'zombies-seabrook') {
     return `Write a short children's fan-fiction story set at Seabrook High School, the school from Disney's "Zombies" movies. This is personal fan fiction written just for Erin and is not for any commercial use.
 

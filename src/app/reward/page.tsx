@@ -21,7 +21,7 @@ function RewardScreen() {
 
   const DAILY_GOAL_SECS = 20 * 60 // 20 minutes
 
-  const themeId = searchParams.get('theme') ?? 'dragon-kingdom'
+  const themeId = searchParams.get('theme') ?? 'minecraft'
   const xpGained = Number(searchParams.get('xp') ?? 0)
   const starsEarned = Number(searchParams.get('stars') ?? 1)
   const newTotalXp = Number(searchParams.get('totalXp') ?? 0)

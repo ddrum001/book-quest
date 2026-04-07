@@ -285,12 +285,14 @@ export default function ParentPage() {
                   themeCounts[s.theme] = (themeCounts[s.theme] ?? 0) + 1
                 }
                 const themeNames: Record<string, string> = {
-                  'dragon-kingdom': '🐉 Dragon Kingdom',
-                  'ocean-depths': '🐠 Ocean Depths',
-                  'star-explorer': '🚀 Star Explorer',
+                  'minecraft':        '⛏️ Minecraft',
+                  'dragon-kingdom':   '🐉 Dragon Kingdom',
+                  'ocean-depths':     '🐠 Ocean Depths',
+                  'star-explorer':    '🚀 Star Explorer',
                   'enchanted-forest': '🌿 Enchanted Forest',
-                  'pirate-seas': '🏴‍☠️ Pirate Seas',
+                  'pirate-seas':      '🏴‍☠️ Pirate Seas',
                   'zombies-seabrook': '🧟 Seabrook High',
+                  'disneyland':       '🏰 Disneyland',
                 }
                 const entries = Object.entries(themeCounts).sort((a, b) => b[1] - a[1])
                 if (entries.length === 0) return <p className="text-ink-light font-body text-sm">No stories read yet.</p>
@@ -348,8 +350,9 @@ export default function ParentPage() {
                 <div className="flex flex-col gap-3">
                   {sessions.slice(0, 10).map(s => {
                     const themeEmojis: Record<string, string> = {
-                      'dragon-kingdom': '🐉', 'ocean-depths': '🐠', 'star-explorer': '🚀',
-                      'enchanted-forest': '🌿', 'pirate-seas': '🏴‍☠️', 'zombies-seabrook': '🧟',
+                      'minecraft': '⛏️', 'dragon-kingdom': '🐉', 'ocean-depths': '🐠',
+                      'star-explorer': '🚀', 'enchanted-forest': '🌿', 'pirate-seas': '🏴‍☠️',
+                      'zombies-seabrook': '🧟', 'disneyland': '🏰',
                     }
                     const stars = s.stars_earned ?? 0
                     return (

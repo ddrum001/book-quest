@@ -10,7 +10,7 @@ const COINS_DAILY_GOAL = 100
 const DAILY_GOAL_SECS = 20 * 60
 
 const ALL_THEMES = [
-  'dragon-kingdom',
+  'minecraft',
   'ocean-depths',
   'star-explorer',
   'enchanted-forest',

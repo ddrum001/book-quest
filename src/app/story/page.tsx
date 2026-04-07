@@ -181,7 +181,7 @@ function toParagraphs(storyText: string): Paragraph[] {
 function StoryScreen() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const themeId = searchParams.get('theme') ?? 'dragon-kingdom'
+  const themeId = searchParams.get('theme') ?? 'minecraft'
   const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0]
   const isResume = searchParams.get('resume') === 'true'
 

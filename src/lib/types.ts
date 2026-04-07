@@ -142,7 +142,7 @@ export type BadgeId =
   | 'math_8s'
 
 export type ThemeId =
-  | 'dragon-kingdom'
+  | 'minecraft'
   | 'ocean-depths'
   | 'star-explorer'
   | 'enchanted-forest'
@@ -161,12 +161,12 @@ export interface ThemeConfig {
 
 export const THEMES: ThemeConfig[] = [
   {
-    id: 'dragon-kingdom',
-    name: 'Dragon Kingdom',
-    emoji: '🐉',
-    color: '#C0392B',
-    bg: '#FFF0EE',
-    description: 'Soar through ancient mountains with brave dragons!',
+    id: 'minecraft',
+    name: 'Minecraft',
+    emoji: '⛏️',
+    color: '#5B7C3A',
+    bg: '#F0F7E8',
+    description: 'Mine, build, and survive epic adventures in the blocky world!',
   },
   {
     id: 'ocean-depths',
