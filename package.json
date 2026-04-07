@@ -10,6 +10,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "@dicebear/avataaars": "^9.4.2",
+    "@dicebear/bottts": "^9.4.2",
     "@dicebear/core": "^9.4.2",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.0",

@@ -6,13 +6,15 @@ import { createClient } from '@/lib/supabase/client'
 import { STORE_ITEMS, type StoreItem, type User } from '@/lib/types'
 import { SKIN_TONES, HAIR_COLORS, EYE_STYLES, EYEBROW_STYLES, MOUTH_STYLES } from '@/lib/avatar'
 import { Avatar } from '@/components/Avatar'
+import { PetAvatar } from '@/components/PetAvatar'
 
-type Tab = 'top' | 'clothing' | 'accessories' | 'backgroundColor' | 'customize'
+type Tab = 'top' | 'clothing' | 'accessories' | 'backgroundColor' | 'customize' | 'pet'
 const TABS: { key: Tab; label: string; emoji: string }[] = [
   { key: 'top',             label: 'Hair',        emoji: '💇' },
   { key: 'clothing',        label: 'Outfits',     emoji: '👕' },
   { key: 'accessories',     label: 'Accessories', emoji: '✨' },
   { key: 'backgroundColor', label: 'Backgrounds', emoji: '🎨' },
+  { key: 'pet',             label: 'Pets',        emoji: '🐾' },
   { key: 'customize',       label: 'Customize',   emoji: '🪄' },
 ]
 
@@ -115,7 +117,12 @@ export default function StorePage() {
     )
   }
 
-  const storeItems = tab !== 'customize' ? STORE_ITEMS.filter(i => i.category === tab) : []
+  const PET_CATEGORIES = ['pet', 'petAccessory', 'petBackground'] as const
+  const storeItems = tab === 'pet'
+    ? STORE_ITEMS.filter(i => PET_CATEGORIES.includes(i.category as typeof PET_CATEGORIES[number]))
+    : tab !== 'customize'
+    ? STORE_ITEMS.filter(i => i.category === tab)
+    : []
 
   return (
     <div className="flex flex-col bg-parchment min-h-screen max-h-screen">
@@ -133,9 +140,12 @@ export default function StorePage() {
         </div>
       </header>
 
-      {/* Avatar preview */}
+      {/* Avatar / Pet preview */}
       <div className="shrink-0 flex flex-col items-center py-3 gap-2">
-        <Avatar equipped={displayEquipped} variant="full" size={120} />
+        {tab === 'pet'
+          ? <PetAvatar equipped={displayEquipped} size={120} />
+          : <Avatar equipped={displayEquipped} variant="full" size={120} />
+        }
         {previewItem ? (
           <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-300 rounded-full px-3 py-1">
             <span className="text-amber-700 text-xs font-heading font-semibold">👁 Trying: {previewItem.name}</span>
@@ -171,13 +181,28 @@ export default function StorePage() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-6 pb-10 flex flex-col gap-3">
 
-        {/* ── Store item tabs ── */}
-        {tab !== 'customize' && storeItems.map(item => {
+        {/* ── Shared item card renderer (used by both pet sections and regular tabs) ── */}
+        {([
+          ...(tab === 'pet'
+            ? (['pet', 'petAccessory', 'petBackground'] as const).flatMap(section => {
+                const sectionLabel = section === 'pet' ? '🐾 Companions' : section === 'petAccessory' ? '🎀 Accessories' : '🌈 Backgrounds'
+                const items = storeItems.filter(i => i.category === section)
+                if (items.length === 0) return []
+                return [{ __sectionHeader: sectionLabel } as unknown as StoreItem, ...items]
+              })
+            : tab !== 'customize' ? storeItems : []),
+        ]).map((item, idx) => {
+          if ('__sectionHeader' in item) {
+            return (
+              <p key={`hdr-${idx}`} className="text-xs font-heading font-semibold text-ink-muted tracking-widest pt-2">
+                {(item as unknown as { __sectionHeader: string }).__sectionHeader}
+              </p>
+            )
+          }
           const owned      = ownedIds.has(item.id)
           const isEquipped = equipped[item.category] === item.id
           const canAfford  = (user.coins ?? 0) >= item.cost
           const isBusy     = busy === item.id
-
           return (
             <div
               key={item.id}

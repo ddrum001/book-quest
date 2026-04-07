@@ -18,7 +18,7 @@ export interface StoreItem {
   name: string
   description: string
   cost: number
-  category: 'top' | 'clothing' | 'accessories' | 'backgroundColor'
+  category: 'top' | 'clothing' | 'accessories' | 'backgroundColor' | 'pet' | 'petAccessory' | 'petBackground'
   emoji: string
   color: string       // hex with # — used for preview swatch in store UI
 }
@@ -79,6 +79,27 @@ export const STORE_ITEMS: StoreItem[] = [
   { id: 'c5f5e8', category: 'backgroundColor', name: 'Mint Dream',     emoji: '🍃', cost: 20, color: '#c5f5e8', description: 'Fresh and refreshing!' },
   { id: 'ffecd2', category: 'backgroundColor', name: 'Peach Glow',     emoji: '🍑', cost: 20, color: '#ffecd2', description: 'Warm peachy vibes!' },
   { id: 'e8ffc0', category: 'backgroundColor', name: 'Lime Splash',    emoji: '🍋', cost: 20, color: '#e8ffc0', description: 'Zesty and fun!' },
+  // ── Companion Pets ───────────────────────────────────────────────────────────
+  { id: 'pet-sparky', category: 'pet', name: 'Sparky', emoji: '⚡', cost: 100, color: '#FFB830', description: 'Your zippy robot buddy!' },
+  { id: 'pet-cosmo',  category: 'pet', name: 'Cosmo',  emoji: '🚀', cost: 100, color: '#7B61FF', description: 'A cosmic companion!' },
+  { id: 'pet-luna',   category: 'pet', name: 'Luna',   emoji: '🌙', cost: 100, color: '#5BB8FF', description: 'Your moonlit friend!' },
+  { id: 'pet-rex',    category: 'pet', name: 'Rex',    emoji: '🦖', cost: 120, color: '#4CAF50', description: 'Dino-bot adventure buddy!' },
+  { id: 'pet-pixel',  category: 'pet', name: 'Pixel',  emoji: '✨', cost: 120, color: '#FF6B9D', description: 'A sparkly little bot!' },
+  { id: 'pet-nova',   category: 'pet', name: 'Nova',   emoji: '💫', cost: 200, color: '#FF7043', description: 'Rare super-star bot!' },
+  // ── Pet Accessories ──────────────────────────────────────────────────────────
+  { id: 'petacc-bow',     category: 'petAccessory', name: 'Bow',       emoji: '🎀', cost: 25, color: '#FF69B4', description: 'A cute little bow!' },
+  { id: 'petacc-crown',   category: 'petAccessory', name: 'Crown',     emoji: '👑', cost: 50, color: '#FFD700', description: 'For the royal pet!' },
+  { id: 'petacc-hat',     category: 'petAccessory', name: 'Top Hat',   emoji: '🎩', cost: 40, color: '#444444', description: 'Very fancy indeed!' },
+  { id: 'petacc-star',    category: 'petAccessory', name: 'Gold Star', emoji: '⭐', cost: 25, color: '#FFD700', description: 'A shining star!' },
+  { id: 'petacc-flowers', category: 'petAccessory', name: 'Flowers',   emoji: '🌸', cost: 30, color: '#FF69B4', description: 'Pretty flower friend!' },
+  { id: 'petacc-halo',    category: 'petAccessory', name: 'Halo',      emoji: '✨', cost: 35, color: '#FFF176', description: 'Pure and sparkly!' },
+  // ── Pet Backgrounds ──────────────────────────────────────────────────────────
+  { id: 'petbg-golden', category: 'petBackground', name: 'Golden',   emoji: '🌟', cost: 20, color: '#fff4bd', description: 'Warm golden glow!' },
+  { id: 'petbg-cosmic', category: 'petBackground', name: 'Cosmic',   emoji: '🔮', cost: 25, color: '#e8d5ff', description: 'Magical purple!' },
+  { id: 'petbg-sky',    category: 'petBackground', name: 'Sky Blue', emoji: '☁️', cost: 20, color: '#b6e3f4', description: 'Bright and breezy!' },
+  { id: 'petbg-forest', category: 'petBackground', name: 'Forest',   emoji: '🌿', cost: 20, color: '#d1f4e0', description: 'Deep forest green!' },
+  { id: 'petbg-rose',   category: 'petBackground', name: 'Rosy',     emoji: '🌷', cost: 20, color: '#fce4ec', description: 'Pretty in pink!' },
+  { id: 'petbg-sunset', category: 'petBackground', name: 'Sunset',   emoji: '🌅', cost: 25, color: '#ffd5b5', description: 'Warm sunset vibes!' },
 ]
 
 export interface ReadingSession {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { THEMES, getLevel, getXpInCurrentLevel, XP_PER_LEVEL, type User } from '@/lib/types'
 import { Avatar } from '@/components/Avatar'
+import { PetAvatar } from '@/components/PetAvatar'
 
 
 const DAILY_GOAL_SECS = 20 * 60
@@ -248,9 +249,16 @@ export default function HomePage() {
     <div className="flex-1 flex flex-col bg-parchment min-h-screen">
       {/* Header */}
       <header className="flex items-center gap-4 px-6 pt-8 pb-4">
-        <button onClick={() => router.push('/store')} className="shrink-0 active:scale-95 transition-transform">
-          <Avatar equipped={user.avatar_equipped ?? {}} size={72} />
-        </button>
+        <div className="flex items-end gap-1.5 shrink-0">
+          <button onClick={() => router.push('/store')} className="active:scale-95 transition-transform">
+            <Avatar equipped={user.avatar_equipped ?? {}} size={72} />
+          </button>
+          {user.avatar_equipped?.pet && (
+            <button onClick={() => router.push('/store')} className="active:scale-95 transition-transform">
+              <PetAvatar equipped={user.avatar_equipped ?? {}} size={46} />
+            </button>
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-heading font-bold text-gold truncate">
             {user.child_name}&apos;s Quest
