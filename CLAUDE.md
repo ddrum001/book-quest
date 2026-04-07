@@ -10,4 +10,4 @@ Vercel is deployed via the CLI (`vercel --prod`), NOT via GitHub auto-deploy. Pu
 3. `git push`
 4. `vercel --prod` to deploy to production
 
-Do all four steps at the end of every coding session without waiting to be asked. If multiple features were built in a session, a single bundled commit is fine.
+Do all four steps immediately whenever the user approves a change — do not wait until the end of a session. Ship early and often for fast feedback loops. If multiple features were built together, a single bundled commit is fine.
