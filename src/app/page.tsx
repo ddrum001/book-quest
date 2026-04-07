@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { getLevel, getXpInCurrentLevel, XP_PER_LEVEL, type User } from '@/lib/types'
+import { THEMES, getLevel, getXpInCurrentLevel, XP_PER_LEVEL, type User } from '@/lib/types'
 import { Avatar } from '@/components/Avatar'
 
 
@@ -50,6 +50,7 @@ export default function HomePage() {
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
   const [isNewUser, setIsNewUser] = useState(false)
+  const [pausedStory, setPausedStory] = useState<{ themeId: string; title: string; emoji: string } | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -70,6 +71,19 @@ export default function HomePage() {
 
       setUser(found as User)
       setTodaySeconds(await fetchTodaySeconds(userId))
+
+      // Check for a paused story
+      const saved = localStorage.getItem(`bookquest_paused_story_${userId}`)
+      if (saved) {
+        try {
+          const paused = JSON.parse(saved)
+          const t = THEMES.find(th => th.id === paused.themeId)
+          if (t && paused.story?.title) {
+            setPausedStory({ themeId: paused.themeId, title: paused.story.title, emoji: t.emoji })
+          }
+        } catch { /* ignore */ }
+      }
+
       setLoading(false)
     }
     load()
@@ -79,6 +93,19 @@ export default function HomePage() {
     localStorage.setItem('bookquest_user_id', selected.id)
     setUser(selected)
     setTodaySeconds(await fetchTodaySeconds(selected.id))
+
+    const saved = localStorage.getItem(`bookquest_paused_story_${selected.id}`)
+    if (saved) {
+      try {
+        const paused = JSON.parse(saved)
+        const t = THEMES.find(th => th.id === paused.themeId)
+        if (t && paused.story?.title) {
+          setPausedStory({ themeId: paused.themeId, title: paused.story.title, emoji: t.emoji })
+        }
+      } catch { setPausedStory(null) }
+    } else {
+      setPausedStory(null)
+    }
   }
 
   async function handleCreateUser(e: React.FormEvent) {
@@ -303,6 +330,18 @@ export default function HomePage() {
           <h2 className="text-3xl font-heading font-bold text-ink mb-1">Ready for adventure?</h2>
           <p className="text-ink-light font-body">Pick a world and start reading!</p>
         </div>
+        {pausedStory && (
+          <button
+            onClick={() => router.push(`/story?theme=${pausedStory.themeId}&resume=true`)}
+            className="w-full max-w-xs bg-sky-50 border-2 border-sky-300 rounded-3xl px-5 py-4 text-center active:scale-95 transition-transform"
+          >
+            <p className="text-[11px] font-heading font-semibold text-sky-500 tracking-widest mb-1">PAUSED STORY</p>
+            <p className="font-heading font-bold text-sky-700 text-lg">
+              {pausedStory.emoji} {pausedStory.title}
+            </p>
+            <p className="text-sky-500 font-body text-sm mt-0.5">⏸ Tap to continue reading</p>
+          </button>
+        )}
         <button
           onClick={() => router.push('/theme-picker')}
           className="w-full max-w-xs bg-gold text-white font-heading font-bold text-2xl py-5 rounded-3xl shadow-lg active:scale-95 transition-transform"

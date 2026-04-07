@@ -183,6 +183,7 @@ function StoryScreen() {
   const searchParams = useSearchParams()
   const themeId = searchParams.get('theme') ?? 'dragon-kingdom'
   const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0]
+  const isResume = searchParams.get('resume') === 'true'
 
   // Story data
   const [phase, setPhase] = useState<Phase>('loading')
@@ -250,6 +251,27 @@ function StoryScreen() {
   // ── Fetch story ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const userId = localStorage.getItem('bookquest_user_id')
+
+    if (isResume && userId) {
+      const saved = localStorage.getItem(`bookquest_paused_story_${userId}`)
+      if (saved) {
+        try {
+          const paused = JSON.parse(saved)
+          sessionKeyRef.current = paused.sessionId
+          activeSecondsRef.current = paused.activeSeconds ?? 0
+          setStory(paused.story)
+          const savedIdx = paused.currentWordIndex ?? 0
+          setCurrentWordIndex(savedIdx)
+          currentWordIndexRef.current = savedIdx
+          setStumbleWords(new Set(paused.stumbleWords ?? []))
+          setSkippedWords(new Set(paused.skippedWords ?? []))
+          setSpokenIndices(new Set(paused.spokenIndices ?? []))
+          setPhase('ready')
+          return
+        } catch { /* fall through to normal fetch */ }
+      }
+    }
+
     fetch(`/api/story?theme=${themeId}&userId=${userId ?? ''}`)
       .then(r => r.json())
       .then(data => {
@@ -263,7 +285,7 @@ function StoryScreen() {
         }).catch(() => {})
       })
       .catch(() => setFetchError("Couldn't load the story. Please go back and try again."))
-  }, [themeId])
+  }, [themeId, isResume])
 
   // ── Auto-scroll current word into view ──────────────────────────────────────
   useEffect(() => {
@@ -387,6 +409,32 @@ function StoryScreen() {
     }
   }
 
+  function handlePauseStory() {
+    isReadingRef.current = false
+    setSpeechEnabled(false)
+    if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
+    window.speechSynthesis?.cancel()
+
+    const userId = localStorage.getItem('bookquest_user_id')
+    if (userId && story) {
+      localStorage.setItem(`bookquest_paused_story_${userId}`, JSON.stringify({
+        sessionId: sessionKeyRef.current,
+        themeId,
+        story,
+        currentWordIndex: currentWordIndexRef.current,
+        activeSeconds: activeSecondsRef.current,
+        stumbleWords: Array.from(stumbleWords),
+        skippedWords: Array.from(skippedWords),
+        spokenIndices: Array.from(spokenIndices),
+        pausedAt: new Date().toISOString(),
+      }))
+    }
+
+    setShowSkipConfirm(false)
+    router.push('/')
+  }
+
   function handleEndStory() {
     isReadingRef.current = false
     setSpeechEnabled(false)
@@ -445,6 +493,9 @@ function StoryScreen() {
       setClaiming(true)
       const userId = localStorage.getItem('bookquest_user_id')
       if (!userId) { router.push('/'); return }
+
+      // Clear any paused state — story is now complete
+      localStorage.removeItem(`bookquest_paused_story_${userId}`)
 
       // Store story data so the games page can generate hangman + quiz content
       sessionStorage.setItem('bookquest_game_data', JSON.stringify({
@@ -689,7 +740,7 @@ function StoryScreen() {
             className="w-full text-white font-heading font-bold text-xl py-5 rounded-3xl shadow-lg active:scale-95 transition-transform"
             style={{ backgroundColor: theme.color }}
           >
-            🎤 Start Reading Aloud
+            {currentWordIndex > 0 ? '▶️ Continue Reading' : '🎤 Start Reading Aloud'}
           </button>
         )}
 
@@ -735,11 +786,11 @@ function StoryScreen() {
           <div className="bg-white rounded-t-3xl w-full max-w-lg px-6 pt-6 pb-10">
             <div className="text-5xl text-center mb-3">📖</div>
             <h2 className="text-xl font-heading font-bold text-ink text-center mb-2">
-              End the story?
+              Need a break?
             </h2>
             <p className="text-ink-light font-body text-sm text-center mb-6">
-              This will stop the story early. It won&apos;t count as completed,
-              so you won&apos;t earn any XP, stars, or streak progress.
+              Pause to save your spot — you&apos;ll get credit for the reading time so far.
+              Rewards are only given when you finish the whole story.
             </p>
             <div className="flex flex-col gap-3">
               <button
@@ -750,10 +801,16 @@ function StoryScreen() {
                 Keep Reading!
               </button>
               <button
-                onClick={handleEndStory}
-                className="w-full bg-white border border-red-200 text-red-400 font-heading font-semibold text-base py-4 rounded-2xl active:scale-95 transition-transform"
+                onClick={handlePauseStory}
+                className="w-full bg-sky-50 border border-sky-300 text-sky-700 font-heading font-semibold text-base py-4 rounded-2xl active:scale-95 transition-transform"
               >
-                Yes, end the story
+                ⏸ Pause &amp; Return Later
+              </button>
+              <button
+                onClick={handleEndStory}
+                className="w-full bg-white border border-red-200 text-red-400 font-heading text-sm font-semibold py-3 rounded-2xl active:scale-95 transition-transform"
+              >
+                End Story (no rewards)
               </button>
             </div>
           </div>
