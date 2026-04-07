@@ -213,6 +213,7 @@ function StoryScreen() {
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const audioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([])
+  const didInitialScrollRef = useRef(false)
 
   // Active reading time tracking
   // Only counts seconds when speech has been heard within the last 45 s
@@ -296,6 +297,16 @@ function StoryScreen() {
     })
   }, [currentWordIndex, phase])
 
+  // Scroll to saved position when a resumed story first loads in ready phase
+  useEffect(() => {
+    if (phase === 'ready' && currentWordIndex > 0 && !didInitialScrollRef.current) {
+      didInitialScrollRef.current = true
+      setTimeout(() => {
+        wordRefs.current[currentWordIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 150)
+    }
+  }, [phase, currentWordIndex])
+
   // ── Hint + audio timers ─────────────────────────────────────────────────────
   const resetHintTimer = useCallback((cancelSpeech = true) => {
     setShowHint(false)
@@ -378,8 +389,8 @@ function StoryScreen() {
     setSpeechEnabled(true)
     setPhase('reading')
     resetHintTimer()
-    // Scroll to first word
-    wordRefs.current[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // Scroll to current word (word 0 on fresh start, saved position on resume)
+    wordRefs.current[currentWordIndexRef.current]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   function handleSkipWord() {
@@ -409,13 +420,15 @@ function StoryScreen() {
     }
   }
 
-  function handlePauseStory() {
+  function stopReadingTimers() {
     isReadingRef.current = false
     setSpeechEnabled(false)
     if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
     if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
     window.speechSynthesis?.cancel()
+  }
 
+  function savePauseState() {
     const userId = localStorage.getItem('bookquest_user_id')
     if (userId && story) {
       localStorage.setItem(`bookquest_paused_story_${userId}`, JSON.stringify({
@@ -423,6 +436,7 @@ function StoryScreen() {
         themeId,
         story,
         currentWordIndex: currentWordIndexRef.current,
+        wordCount: words.length,
         activeSeconds: activeSecondsRef.current,
         stumbleWords: Array.from(stumbleWords),
         skippedWords: Array.from(skippedWords),
@@ -430,26 +444,26 @@ function StoryScreen() {
         pausedAt: new Date().toISOString(),
       }))
     }
+  }
 
+  function handlePauseStory() {
+    stopReadingTimers()
+    savePauseState()
     setShowSkipConfirm(false)
     router.push('/')
   }
 
   function handleEndStory() {
-    isReadingRef.current = false
-    setSpeechEnabled(false)
-    if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
-    if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
-    window.speechSynthesis?.cancel()
+    stopReadingTimers()
     router.push('/')
   }
 
   function handleBack() {
-    isReadingRef.current = false
-    setSpeechEnabled(false)
-    if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
-    if (audioTimerRef.current) clearTimeout(audioTimerRef.current)
-    window.speechSynthesis?.cancel()
+    stopReadingTimers()
+    // Auto-save progress if reading has started, so user can resume later
+    if (currentWordIndexRef.current > 0) {
+      savePauseState()
+    }
     router.back()
   }
 
@@ -761,19 +775,25 @@ function StoryScreen() {
               </div>
             </div>
 
-            {/* Word skip + end story buttons */}
+            {/* Word skip + pause + end story buttons */}
             <div className="flex gap-2">
               <button
                 onClick={handleSkipWord}
                 className="flex-1 bg-amber-50 border border-amber-300 text-amber-800 font-heading font-semibold text-sm py-3 rounded-2xl active:scale-95 transition-transform"
               >
-                🔊 Skip word
+                🔊 Skip
+              </button>
+              <button
+                onClick={handlePauseStory}
+                className="flex-1 bg-sky-50 border border-sky-300 text-sky-700 font-heading font-semibold text-sm py-3 rounded-2xl active:scale-95 transition-transform"
+              >
+                ⏸ Pause
               </button>
               <button
                 onClick={() => setShowSkipConfirm(true)}
-                className="bg-white border border-red-200 text-red-400 font-heading text-sm font-semibold px-4 py-3 rounded-2xl active:scale-95 transition-transform"
+                className="bg-white border border-red-200 text-red-400 font-heading text-sm font-semibold px-3 py-3 rounded-2xl active:scale-95 transition-transform"
               >
-                End Story
+                End
               </button>
             </div>
           </div>
@@ -784,13 +804,12 @@ function StoryScreen() {
       {showSkipConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 pb-0">
           <div className="bg-white rounded-t-3xl w-full max-w-lg px-6 pt-6 pb-10">
-            <div className="text-5xl text-center mb-3">📖</div>
+            <div className="text-5xl text-center mb-3">🚪</div>
             <h2 className="text-xl font-heading font-bold text-ink text-center mb-2">
-              Need a break?
+              End this story?
             </h2>
             <p className="text-ink-light font-body text-sm text-center mb-6">
-              Pause to save your spot — you&apos;ll get credit for the reading time so far.
-              Rewards are only given when you finish the whole story.
+              You won&apos;t receive any rewards unless you finish. Use the ⏸ Pause button to save your spot and come back later!
             </p>
             <div className="flex flex-col gap-3">
               <button
@@ -801,14 +820,8 @@ function StoryScreen() {
                 Keep Reading!
               </button>
               <button
-                onClick={handlePauseStory}
-                className="w-full bg-sky-50 border border-sky-300 text-sky-700 font-heading font-semibold text-base py-4 rounded-2xl active:scale-95 transition-transform"
-              >
-                ⏸ Pause &amp; Return Later
-              </button>
-              <button
                 onClick={handleEndStory}
-                className="w-full bg-white border border-red-200 text-red-400 font-heading text-sm font-semibold py-3 rounded-2xl active:scale-95 transition-transform"
+                className="w-full bg-white border border-red-200 text-red-400 font-heading font-semibold text-base py-3 rounded-2xl active:scale-95 transition-transform"
               >
                 End Story (no rewards)
               </button>

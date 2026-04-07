@@ -51,7 +51,7 @@ export default function HomePage() {
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
   const [isNewUser, setIsNewUser] = useState(false)
-  const [pausedStory, setPausedStory] = useState<{ themeId: string; title: string; emoji: string } | null>(null)
+  const [pausedStory, setPausedStory] = useState<{ themeId: string; title: string; emoji: string; progress: number } | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -80,7 +80,10 @@ export default function HomePage() {
           const paused = JSON.parse(saved)
           const t = THEMES.find(th => th.id === paused.themeId)
           if (t && paused.story?.title) {
-            setPausedStory({ themeId: paused.themeId, title: paused.story.title, emoji: t.emoji })
+            const progress = paused.wordCount > 0
+              ? Math.round((paused.currentWordIndex / paused.wordCount) * 100)
+              : 0
+            setPausedStory({ themeId: paused.themeId, title: paused.story.title, emoji: t.emoji, progress })
           }
         } catch { /* ignore */ }
       }
@@ -101,7 +104,10 @@ export default function HomePage() {
         const paused = JSON.parse(saved)
         const t = THEMES.find(th => th.id === paused.themeId)
         if (t && paused.story?.title) {
-          setPausedStory({ themeId: paused.themeId, title: paused.story.title, emoji: t.emoji })
+          const progress = paused.wordCount > 0
+            ? Math.round((paused.currentWordIndex / paused.wordCount) * 100)
+            : 0
+          setPausedStory({ themeId: paused.themeId, title: paused.story.title, emoji: t.emoji, progress })
         }
       } catch { setPausedStory(null) }
     } else {
@@ -341,13 +347,19 @@ export default function HomePage() {
         {pausedStory && (
           <button
             onClick={() => router.push(`/story?theme=${pausedStory.themeId}&resume=true`)}
-            className="w-full max-w-xs bg-sky-50 border-2 border-sky-300 rounded-3xl px-5 py-4 text-center active:scale-95 transition-transform"
+            className="w-full max-w-xs bg-sky-50 border-2 border-sky-300 rounded-3xl px-5 py-4 text-left active:scale-95 transition-transform"
           >
-            <p className="text-[11px] font-heading font-semibold text-sky-500 tracking-widest mb-1">PAUSED STORY</p>
-            <p className="font-heading font-bold text-sky-700 text-lg">
+            <p className="text-[11px] font-heading font-semibold text-sky-500 tracking-widest mb-1">⏸ STORY IN PROGRESS</p>
+            <p className="font-heading font-bold text-sky-700 text-lg leading-snug mb-2">
               {pausedStory.emoji} {pausedStory.title}
             </p>
-            <p className="text-sky-500 font-body text-sm mt-0.5">⏸ Tap to continue reading</p>
+            <div className="h-2 bg-sky-100 rounded-full overflow-hidden mb-1">
+              <div
+                className="h-full bg-sky-400 rounded-full transition-all duration-500"
+                style={{ width: `${pausedStory.progress}%` }}
+              />
+            </div>
+            <p className="text-sky-500 font-body text-xs">{pausedStory.progress}% complete — tap to continue!</p>
           </button>
         )}
         <button
