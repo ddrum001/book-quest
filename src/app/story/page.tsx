@@ -200,6 +200,7 @@ function StoryScreen() {
   const [showSkipConfirm, setShowSkipConfirm] = useState(false)
   const [claiming, setClaiming] = useState(false)
   const [rewardParams, setRewardParams] = useState<string | null>(null)
+  const [tooManySkips, setTooManySkips] = useState(false)
   // Synchronous guard — ref updates are immediate unlike setState, so rapid taps
   // all see the true value set by the first tap before any re-render occurs
   const claimingRef = useRef(false)
@@ -220,6 +221,7 @@ function StoryScreen() {
   const IDLE_THRESHOLD = 25_000
   const activeSecondsRef = useRef(0)
   const lastActivityRef = useRef(0)
+  const skipCountRef = useRef(0)
 
   // ── Text-to-speech helper ───────────────────────────────────────────────────
   const speakWord = useCallback((word: string) => {
@@ -260,6 +262,7 @@ function StoryScreen() {
           const paused = JSON.parse(saved)
           sessionKeyRef.current = paused.sessionId
           activeSecondsRef.current = paused.activeSeconds ?? 0
+          skipCountRef.current = paused.skipCount ?? 0
           setStory(paused.story)
           const savedIdx = paused.currentWordIndex ?? 0
           setCurrentWordIndex(savedIdx)
@@ -397,6 +400,7 @@ function StoryScreen() {
     const idx = currentWordIndexRef.current
     if (idx >= words.length) return
 
+    skipCountRef.current += 1
     const word = words[idx]
     setSkippedWords(prev => { const n = new Set(prev); n.add(word.clean); return n })
     setSpokenIndices(prev => { const n = new Set(prev); n.add(idx); return n })
@@ -438,6 +442,7 @@ function StoryScreen() {
         currentWordIndex: currentWordIndexRef.current,
         wordCount: words.length,
         activeSeconds: activeSecondsRef.current,
+        skipCount: skipCountRef.current,
         stumbleWords: Array.from(stumbleWords),
         skippedWords: Array.from(skippedWords),
         spokenIndices: Array.from(spokenIndices),
@@ -529,9 +534,17 @@ function StoryScreen() {
           skippedWords: skippedList,
           vocabWords: story?.vocab.map(v => v.word) ?? [],
           readingSeconds: activeSecondsRef.current,
+          skipCount: skipCountRef.current,
         }),
       })
       const data = await res.json()
+
+      if (data.tooManySkips) {
+        setTooManySkips(true)
+        setClaiming(false)
+        claimingRef.current = false
+        return
+      }
 
       const params = new URLSearchParams({
         theme: themeId,
@@ -588,7 +601,22 @@ function StoryScreen() {
             </div>
           )}
 
-          {!rewardParams ? (
+          {tooManySkips ? (
+            <div className="w-full max-w-sm flex flex-col gap-4 text-center">
+              <div className="bg-orange-50 border-2 border-orange-200 rounded-3xl px-6 py-5">
+                <p className="text-3xl mb-2">😬</p>
+                <p className="text-orange-800 font-heading font-bold text-lg mb-1">
+                  Too many words skipped!
+                </p>
+                <p className="text-orange-700 font-body text-sm">
+                  No rewards this time — try reading the words aloud instead of skipping them.
+                </p>
+              </div>
+              <button onClick={() => router.push('/')} className="text-ink-light font-heading text-sm">
+                Back to Home
+              </button>
+            </div>
+          ) : !rewardParams ? (
             <button
               onClick={handleClaimRewards}
               disabled={claiming}

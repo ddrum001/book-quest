@@ -60,8 +60,10 @@ function getPtTodayBounds(): { gte: string; lt: string } {
   return { gte: startUTC.toISOString(), lt: endUTC.toISOString() }
 }
 
+const SKIP_THRESHOLD = 0.25 // more than 25% of words skipped = no rewards
+
 export async function POST(request: Request) {
-  const { sessionId, userId, theme, storyText, stumbleWords, skippedWords, vocabWords, readingSeconds } =
+  const { sessionId, userId, theme, storyText, stumbleWords, skippedWords, vocabWords, readingSeconds, skipCount } =
     await request.json()
 
   const supabase = await createClient()
@@ -75,6 +77,29 @@ export async function POST(request: Request) {
 
   if (userError || !user) {
     return Response.json({ error: 'User not found' }, { status: 404 })
+  }
+
+  // ── Anti-gaming: excessive skip detection ─────────────────────────────────
+  const totalWords = storyText ? storyText.split(/\s+/).filter(Boolean).length : 0
+  const tooManySkips = totalWords > 0 && (skipCount ?? 0) > totalWords * SKIP_THRESHOLD
+
+  if (tooManySkips) {
+    // Save session for parent visibility but award nothing
+    const sessionSeconds = Math.max(0, Math.round(readingSeconds ?? 0))
+    const allDifficult = [...new Set([...(stumbleWords ?? []), ...(skippedWords ?? [])])]
+    await supabase.from('sessions').upsert({
+      ...(sessionId ? { id: sessionId } : {}),
+      user_id: userId,
+      theme,
+      story_text: storyText ?? '',
+      quiz_score: null,
+      stars_earned: 0,
+      vocab_words: vocabWords ?? [],
+      stumble_words: allDifficult,
+      reading_seconds: sessionSeconds,
+    }, { onConflict: 'id', ignoreDuplicates: true })
+
+    return Response.json({ tooManySkips: true })
   }
 
   // ── Fetch previous sessions (used for streak + theme checks) ─────────────────
