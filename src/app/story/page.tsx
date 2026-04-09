@@ -88,6 +88,7 @@ const HOMOPHONES: Record<string, string> = {
   'stair': 'stare',
   // Erin / Aaron (recognizer often transcribes the name as Aaron)
   'aaron': 'erin',
+  "aaron's": "erin's",
   // Erin's / errands
   'errands': "erin's",
   // night / knight

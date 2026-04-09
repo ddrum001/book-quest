@@ -32,31 +32,44 @@ export function useSpeechRecognition(
     recognition.interimResults = true
     recognition.lang = 'en-US'
 
-    // Track the last-seen transcript per result index so we only emit NEW words
-    const lastTranscriptPerResult = new Map<number, string>()
+    // Track emitted words per result index so we catch both new words AND
+    // in-place revisions (e.g. "e" → "er" → "erin" stay as word count = 1
+    // the whole time — the old slice-by-count approach silently dropped them)
+    const emittedPerResult = new Map<number, string[]>()
 
     recognition.onstart = () => setListening(true)
 
     recognition.onresult = (event: any) => {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript.toLowerCase().trim()
-        const prev = lastTranscriptPerResult.get(i) ?? ''
-        if (transcript === prev) continue
-        lastTranscriptPerResult.set(i, transcript)
-
-        // Only emit words that are NEW since the last update for this result
-        const prevWords = prev.split(/\s+/).filter(Boolean)
         const allWords = transcript.split(/\s+/).filter(Boolean)
-        const newWords = allWords.slice(prevWords.length)
+        const prevEmitted = emittedPerResult.get(i) ?? []
+
+        const toEmit: string[] = []
+
+        // Words added beyond what was already emitted
+        for (let j = prevEmitted.length; j < allWords.length; j++) {
+          toEmit.push(allWords[j])
+        }
+
+        // Last word revised within the same word count (e.g. "a" → "aaron",
+        // or "e" → "erin"). Re-emit the revised form so the matcher sees it.
+        if (toEmit.length === 0 && allWords.length > 0 && prevEmitted.length > 0) {
+          const lastNew = allWords[allWords.length - 1]
+          const lastPrev = prevEmitted[prevEmitted.length - 1]
+          if (lastNew !== lastPrev) toEmit.push(lastNew)
+        }
+
+        emittedPerResult.set(i, [...allWords])
         setLastRaw(transcript)
 
-        newWords.forEach((w: string) => {
+        toEmit.forEach((w: string) => {
           const clean = w.replace(/[^a-z']/g, '')
           if (clean) onWordRef.current(clean)
         })
 
         if (event.results[i].isFinal) {
-          lastTranscriptPerResult.clear()
+          emittedPerResult.delete(i)
         }
       }
     }
