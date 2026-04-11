@@ -80,12 +80,12 @@ export const STORE_ITEMS: StoreItem[] = [
   { id: 'ffecd2', category: 'backgroundColor', name: 'Peach Glow',     emoji: '🍑', cost: 20, color: '#ffecd2', description: 'Warm peachy vibes!' },
   { id: 'e8ffc0', category: 'backgroundColor', name: 'Lime Splash',    emoji: '🍋', cost: 20, color: '#e8ffc0', description: 'Zesty and fun!' },
   // ── Companion Pets ───────────────────────────────────────────────────────────
-  { id: 'pet-sparky', category: 'pet', name: 'Sparky', emoji: '⚡', cost: 100, color: '#FFB830', description: 'Your zippy robot buddy!' },
-  { id: 'pet-cosmo',  category: 'pet', name: 'Cosmo',  emoji: '🚀', cost: 100, color: '#7B61FF', description: 'A cosmic companion!' },
-  { id: 'pet-luna',   category: 'pet', name: 'Luna',   emoji: '🌙', cost: 100, color: '#5BB8FF', description: 'Your moonlit friend!' },
-  { id: 'pet-rex',    category: 'pet', name: 'Rex',    emoji: '🦖', cost: 120, color: '#4CAF50', description: 'Dino-bot adventure buddy!' },
-  { id: 'pet-pixel',  category: 'pet', name: 'Pixel',  emoji: '✨', cost: 120, color: '#FF6B9D', description: 'A sparkly little bot!' },
-  { id: 'pet-nova',   category: 'pet', name: 'Nova',   emoji: '💫', cost: 200, color: '#FF7043', description: 'Rare super-star bot!' },
+  { id: 'pet-sparky', category: 'pet', name: 'Sparky',  emoji: '🐶', cost: 100, color: '#FFB830', description: 'A cheerful pup always ready to play!' },
+  { id: 'pet-cosmo',  category: 'pet', name: 'Hoot',    emoji: '🦉', cost: 100, color: '#7B61FF', description: 'A wise owl who loves books!' },
+  { id: 'pet-luna',   category: 'pet', name: 'Luna',    emoji: '🐱', cost: 100, color: '#5BB8FF', description: 'A curious kitty who purrs at stories!' },
+  { id: 'pet-rex',    category: 'pet', name: 'Rex',     emoji: '🦁', cost: 120, color: '#4CAF50', description: 'The king of the quest!' },
+  { id: 'pet-pixel',  category: 'pet', name: 'Puddles', emoji: '🐸', cost: 120, color: '#FF6B9D', description: 'A leapy frog full of surprises!' },
+  { id: 'pet-nova',   category: 'pet', name: 'Ember',   emoji: '🦊', cost: 200, color: '#FF7043', description: 'A clever fox with a fiery spirit!' },
   // ── Pet Accessories ──────────────────────────────────────────────────────────
   { id: 'petacc-bow',     category: 'petAccessory', name: 'Bow',       emoji: '🎀', cost: 25, color: '#FF69B4', description: 'A cute little bow!' },
   { id: 'petacc-crown',   category: 'petAccessory', name: 'Crown',     emoji: '👑', cost: 50, color: '#FFD700', description: 'For the royal pet!' },
@@ -140,6 +140,7 @@ export type BadgeId =
   | 'streak_30'
   | 'streak_60'
   | 'math_8s'
+  | 'math_9s'
 
 export type ThemeId =
   | 'minecraft'
@@ -237,6 +238,7 @@ export const BADGE_INFO: Record<BadgeId, { name: string; emoji: string; descript
   streak_30: { name: '30-Day Streak',   emoji: '👑', description: 'A whole month of daily reading!' },
   streak_60: { name: '60-Day Streak',   emoji: '👑', description: 'Two months of reading every single day!' },
   math_8s:   { name: 'Times 8 Master', emoji: '🧮', description: 'Got a perfect score on the 8s times tables!' },
+  math_9s:   { name: 'Times 9 Master', emoji: '🧮', description: 'Got a perfect score on the 9s times tables!' },
 }
 
 export const XP_PER_LEVEL = 100

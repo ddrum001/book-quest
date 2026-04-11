@@ -45,13 +45,13 @@ export async function POST(request: Request) {
     })
     .eq('id', userId)
 
-  // Badge: perfect score on 8s tables
+  // Badge: perfect score on 9s tables
   const newBadges: BadgeId[] = []
   if (score === total) {
     const { error } = await supabase
       .from('badges')
-      .insert({ user_id: userId, badge_id: 'math_8s' })
-    if (!error) newBadges.push('math_8s')
+      .insert({ user_id: userId, badge_id: 'math_9s' })
+    if (!error) newBadges.push('math_9s')
   }
 
   return Response.json({

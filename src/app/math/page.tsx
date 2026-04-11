@@ -8,7 +8,7 @@ import { getXpInCurrentLevel, XP_PER_LEVEL, BADGE_INFO, type BadgeId } from '@/l
 
 const ALL_FACTS = Array.from({ length: 10 }, (_, i) => ({
   factor: i + 1,
-  answer: 8 * (i + 1),
+  answer: 9 * (i + 1),
 }))
 
 function shuffle<T>(arr: T[]): T[] {
@@ -22,7 +22,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 function getOptions(correct: number): number[] {
   const wrongs = new Set<number>()
-  const offsets = [8, 16, 4, 24, 12]
+  const offsets = [9, 18, 3, 27, 6]
   for (const off of offsets) {
     if (wrongs.size >= 3) break
     if (correct - off > 0 && !wrongs.has(correct - off)) wrongs.add(correct - off)
@@ -141,7 +141,7 @@ export default function MathPage() {
     const id = localStorage.getItem('bookquest_user_id')
     if (!id) { router.push('/'); return }
     setUserId(id)
-    const practiced = !!localStorage.getItem('math_8s_practiced')
+    const practiced = !!localStorage.getItem('math_9s_practiced')
     setHasCompletedPractice(practiced)
     if (!practiced) {
       // First time — skip the mode selector and go straight into practice
@@ -292,7 +292,7 @@ export default function MathPage() {
     setClaiming(true)
     const score = results.filter(Boolean).length
     if (mode === 'practice') {
-      localStorage.setItem('math_8s_practiced', '1')
+      localStorage.setItem('math_9s_practiced', '1')
       setHasCompletedPractice(true)
     }
     const res = await fetch('/api/complete-math', {
@@ -316,7 +316,7 @@ export default function MathPage() {
         <div className="text-center">
           <div className="text-7xl mb-3">🧮</div>
           <h1 className="text-3xl font-heading font-bold text-ink">Times Tables</h1>
-          <p className="text-ink-light font-body mt-1">8 × 1 through 8 × 10</p>
+          <p className="text-ink-light font-body mt-1">9 × 1 through 9 × 10</p>
         </div>
         <div className="w-full max-w-sm flex flex-col gap-4">
           <button
@@ -356,7 +356,7 @@ export default function MathPage() {
             ))}
           </div>
           <p className="text-ink-light font-body text-lg">
-            {stars === 3 ? 'Perfect! You know your 8s!' :
+            {stars === 3 ? 'Perfect! You know your 9s!' :
              stars === 2 ? 'Almost perfect — great work!' :
              stars >= 1 ? 'Good start — keep practicing!' :
              "Keep going — you'll get there!"}
@@ -540,7 +540,7 @@ export default function MathPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-8">
           <div className="bg-white rounded-3xl px-8 py-10 border border-gold/20 shadow-sm text-center w-full max-w-sm">
             <p className="text-ink-muted font-heading text-lg mb-2">What is</p>
-            <p className="text-6xl font-heading font-bold text-ink">8 × {q.factor}</p>
+            <p className="text-6xl font-heading font-bold text-ink">9 × {q.factor}</p>
             <p className="text-5xl font-heading font-bold text-gold mt-1">= ?</p>
           </div>
 
@@ -615,7 +615,7 @@ export default function MathPage() {
           />
           {challengeFeedback && (
             <p className={`text-center text-sm font-heading font-bold mt-2 ${challengeFeedback === 'correct' ? 'text-green-600' : 'text-red-500'}`}>
-              {challengeFeedback === 'correct' ? `✓ Correct! 8 × ${q.factor} = ${q.answer}` : `✗ The answer is ${q.answer}`}
+              {challengeFeedback === 'correct' ? `✓ Correct! 9 × ${q.factor} = ${q.answer}` : `✗ The answer is ${q.answer}`}
             </p>
           )}
         </div>
