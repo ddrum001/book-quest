@@ -595,7 +595,7 @@ export default function MathPage() {
         {/* Question */}
         <div className="bg-white rounded-3xl px-8 py-10 border border-gold/20 shadow-sm text-center w-full max-w-sm">
           <p className="text-ink-muted font-heading text-lg mb-2">What is</p>
-          <p className="text-6xl font-heading font-bold text-ink">8 × {q.factor}</p>
+          <p className="text-6xl font-heading font-bold text-ink">9 × {q.factor}</p>
           <p className="text-5xl font-heading font-bold text-gold mt-1">= ?</p>
         </div>
 
