@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     })
     .eq('id', userId)
 
-  // Badge: perfect score on 9s tables
+  // Badge: perfect score on multiplication facts to 81
   const newBadges: BadgeId[] = []
   if (score === total) {
     const { error } = await supabase

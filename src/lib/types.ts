@@ -238,7 +238,7 @@ export const BADGE_INFO: Record<BadgeId, { name: string; emoji: string; descript
   streak_30: { name: '30-Day Streak',   emoji: '👑', description: 'A whole month of daily reading!' },
   streak_60: { name: '60-Day Streak',   emoji: '👑', description: 'Two months of reading every single day!' },
   math_8s:   { name: 'Times 8 Master', emoji: '🧮', description: 'Got a perfect score on the 8s times tables!' },
-  math_9s:   { name: 'Times 9 Master', emoji: '🧮', description: 'Got a perfect score on the 9s times tables!' },
+  math_9s:   { name: 'Multiplication Master', emoji: '🧮', description: 'Got a perfect score on multiplication facts to 81!' },
 }
 
 export const XP_PER_LEVEL = 100
